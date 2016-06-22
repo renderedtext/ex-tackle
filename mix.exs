@@ -10,8 +10,7 @@ defmodule Tackle.Mixfile do
      deps: deps]
   end
   def application do
-    [applications: [:logger, :amqp],
-     mod: {Tackle, []}]
+    [applications: [:logger, :amqp]]
   end
 
   defp deps do
