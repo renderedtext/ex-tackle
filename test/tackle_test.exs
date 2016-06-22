@@ -27,11 +27,13 @@ defmodule TackleTest do
     it "receives a published message on the exchange" do
       {response, consumer} = TestConsumer.start_link
 
-      :timer.sleep(2000)
+      :timer.sleep(1000)
+
+      File.rm!("/tmp/messages")
 
       Tackle.publish("Hi!", @publish_options)
 
-      :timer.sleep(2000)
+      :timer.sleep(1000)
 
       messages = File.read!("/tmp/messages")
 

@@ -14,11 +14,10 @@ defmodule Tackle.Consumer do
     retry_delay = options[:retry_delay] || 10
 
     quote do
+      @behaviour Tackle.Consumer.Behaviour
+
       require Logger
       use GenServer
-      use AMQP
-
-      @behaviour Tackle.Consumer.Behaviour
 
       def start_link do
         GenServer.start_link(__MODULE__, {}, name: __MODULE__)
@@ -31,13 +30,16 @@ defmodule Tackle.Consumer do
         routing_key = unquote(routing_key)
 
         Logger.info "Connecting to '#{url}'"
-        channel = Tackle.Channel.create(url)
+        {:ok, connection} = AMQP.Connection.open(url)
+        channel = Tackle.Channel.create(connection)
 
         Logger.info "Creating queue '#{queue_name}'"
         Tackle.Queue.create(channel, routing_key, queue_name)
 
         Logger.info "Bindind queue '#{queue_name}' to exchange '#{exchange}' with routing key '#{routing_key}'"
         Tackle.Queue.bind(channel, exchange, routing_key, queue_name)
+
+        {:ok, _consumer_tag} = AMQP.Basic.consume(channel, queue_name)
 
         {:ok, channel}
       end
@@ -56,7 +58,7 @@ defmodule Tackle.Consumer do
         try do
           handle_message(payload)
 
-          Basic.ack(channel, tag)
+          AMQP.Basic.ack(channel, tag)
         rescue
           e in RuntimeError ->
             Basic.reject channel, tag, requeue: not redelivered

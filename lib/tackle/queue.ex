@@ -19,8 +19,6 @@ defmodule Tackle.Queue do
     Exchange.direct(channel, exchange, durable: true)
 
     Queue.bind(channel, queue_name, exchange, routing_key: routing_key)
-
-    {:ok, _consumer_tag} = Basic.consume(channel, queue_name)
   end
 
 end
