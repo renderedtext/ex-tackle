@@ -1,14 +1,19 @@
 # Tackle
 
-Tackle everything with Elixir! Simplified AMQP client.
+Tackle everything with Elixir!
+Tackle is a simplified AMQP client.
+
+## Consuming messages from an exchange
+
+First, declare a consumer module:
 
 ``` elixir
-defmodule MyConsumer do
+defmodule TestConsumer do
   use Tackle.Consumer,
     url: "amqp://localhost",
-    exchange: "my-exchange",
-    routing_key: "my-messages",
-    queue: "my-consumer-queue"
+    exchange: "test-exchange",
+    routing_key: "test-messages",
+    queue: "test-consumer-queue"
 
   def handle_message(message) do
     IO.puts "A message arrived. Life is good!"
@@ -16,4 +21,10 @@ defmodule MyConsumer do
     IO.puts message
   end
 end
+```
+
+And then start it to consume messages:
+
+``` elixir
+TestConsumer.start_link
 ```
