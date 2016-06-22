@@ -25,7 +25,7 @@ defmodule TackleTest do
 
   describe "tackle communication" do
     it "receives a published message on the exchange" do
-      {response, consumer} = TestConsumer.start_link
+      {:ok, consumer} = TestConsumer.start_link
 
       :timer.sleep(1000)
 
@@ -38,6 +38,52 @@ defmodule TackleTest do
       messages = File.read!("/tmp/messages")
 
       assert String.contains?(messages, "Hi!")
+    end
+  end
+
+  @broken_publish_options %{
+    url: "amqp://localhost",
+    exchange: "broken-exchange",
+    routing_key: "broken-messages",
+  }
+
+  defmodule BrokenConsumer do
+    use Tackle.Consumer,
+      url: "amqp://localhost",
+      exchange: "broken-exchange",
+      routing_key: "broken-messages",
+      queue: "broken-consumer",
+      retry_limit: 3,
+      retry_delay: 1
+
+    def handle_message(message) do
+      IO.puts "Here!"
+
+      {:ok, file} = File.open "/tmp/messages", [:append]
+      IO.binwrite(file, message)
+      File.close(file)
+
+      raise "Giving up"
+    end
+  end
+
+  describe "retry to process message" do
+    it "retries to consume the message" do
+      {:ok, consumer} = BrokenConsumer.start_link
+
+      File.rm("/tmp/messages")
+
+      Tackle.publish("Hi!", @broken_publish_options)
+
+      :timer.sleep(3000)
+
+      GenServer.stop(consumer)
+
+      messages = File.read!("/tmp/messages")
+
+      IO.puts messages
+
+      assert String.contains?(messages, "Hi!Hi!Hi!")
     end
   end
 
