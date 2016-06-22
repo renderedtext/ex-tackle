@@ -9,15 +9,33 @@ defmodule TackleTest do
       queue: "test-consumer-queue"
 
     def handle_message(message) do
-      IO.puts "here"
+      {:ok, file} = File.open "/tmp/messages", [:write]
+
+      IO.binwrite(file, message)
+
+      File.close(file)
     end
   end
 
-  describe "consumer creation" do
-    it "connects to amqp server" do
+  @publish_options %{
+    url: "amqp://localhost",
+    exchange: "test-exchange",
+    routing_key: "test-messages",
+  }
+
+  describe "tackle communication" do
+    it "receives a published message on the exchange" do
       {response, consumer} = TestConsumer.start_link
 
-      assert response == :ok
+      :timer.sleep(2000)
+
+      Tackle.publish("Hi!", @publish_options)
+
+      :timer.sleep(2000)
+
+      messages = File.read!("/tmp/messages")
+
+      assert String.contains?(messages, "Hi!")
     end
   end
 
