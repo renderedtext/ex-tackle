@@ -29,7 +29,7 @@ defmodule TackleTest do
 
       :timer.sleep(1000)
 
-      File.rm!("/tmp/messages")
+      File.rm("/tmp/messages")
 
       Tackle.publish("Hi!", @publish_options)
 
