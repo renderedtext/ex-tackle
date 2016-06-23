@@ -3,6 +3,26 @@
 Tackle everything with Elixir!
 Tackle is a simplified AMQP client.
 
+## Installation
+
+Add the following to the list of your dependencies:
+
+``` elixir
+def deps do
+  [
+    {:tackle, github: "renderedtext/ex-tackle"}
+  ]
+end
+```
+
+Also, add it to the list of your applications:
+
+``` elixir
+def application do
+  [applications: [:tackle]]
+end
+```
+
 ## Publishing messages to an exchange
 
 To publish a message to an exchange:
