@@ -80,6 +80,7 @@ defmodule Tackle.Consumer do
         rescue
           e in RuntimeError ->
             delayed_retry(state, payload, retry_count)
+            AMQP.Basic.nack(tag, false, false)
         end
       end
 
