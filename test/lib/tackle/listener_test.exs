@@ -1,6 +1,15 @@
 defmodule Tackle.ListenerTest do
   use ExSpec
 
+  setup do
+    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
+    {:ok, channel} = AMQP.Channel.open(connection)
+
+    AMQP.Exchange.direct(channel, "test-exchange", durable: true)
+
+    AMQP.Connection.close(connection)
+  end
+
   defmodule TestConsumer do
     use Tackle.Consumer,
       url: "amqp://localhost",
