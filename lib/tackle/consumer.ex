@@ -8,10 +8,10 @@ defmodule Tackle.Consumer do
 
     exchange = options[:exchange]
     routing_key = options[:routing_key]
-    queue = options[:queue]
+    service_name = options[:service_name]
 
-    retry_limit = options[:retry_limit] || 10
-    retry_delay = options[:retry_delay] || 10
+    retry_delays = options[:retry_delays] || [30, 3600]
+    retry_limits = options[:retry_limits] || [10, 10]
 
     quote do
       @behaviour Tackle.Consumer.Behaviour
@@ -24,24 +24,21 @@ defmodule Tackle.Consumer do
       end
 
       def init({}) do
-        url         = unquote(url)
-        queue_name  = unquote(queue)
-        exchange    = unquote(exchange)
+        url = unquote(url)
+        service = unquote(service_name)
+        remote_exchange = unquote(exchange)
         routing_key = unquote(routing_key)
-        retry_delay = unquote(retry_delay)
-        retry_limit = unquote(retry_limit)
+        retry_delays = unquote(retry_delay)
+        retry_limits = unquote(retry_limit)
 
-        Logger.info "Connecting to '#{url}'"
-        {:ok, connection} = AMQP.Connection.open(url)
-        channel = Tackle.Channel.create(connection)
+        channel = Tackle.Channel.create(url)
 
-        Logger.info "Creating queue '#{queue_name}'"
-        Tackle.Queue.create(channel, exchange, routing_key, queue_name, retry_delay)
+        Tackle.Exchange.create_exchange_for_service(channel, service)
+        Tackle.Exchange.bind(channel, service, remote_exchange, routing_key)
 
-        Logger.info "Bindind queue '#{queue_name}' to exchange '#{exchange}' with routing key '#{routing_key}'"
-        Tackle.Queue.bind(channel, exchange, routing_key, queue_name)
+        queue = Tackle.Queue.create_queues(channel, service, routing_key, delays)
 
-        {:ok, _consumer_tag} = AMQP.Basic.consume(channel, queue_name)
+        {:ok, _consumer_tag} = AMQP.Basic.consume(channel, queue)
 
         state = %{
           channel: channel,
