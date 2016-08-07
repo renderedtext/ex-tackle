@@ -1,10 +1,8 @@
 defmodule Tackle.Channel do
   use AMQP
+  require Logger
 
-  def create(url) do
-    Logger.info "Connecting to '#{url}'"
-
-    {:ok, connection} = AMQP.Connection.open(url)
+  def create(connection) do
     {:ok, channel} = Channel.open(connection)
 
     # Limit unacknowledged messages to 10

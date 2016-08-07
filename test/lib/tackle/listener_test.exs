@@ -6,7 +6,7 @@ defmodule Tackle.ListenerTest do
       url: "amqp://localhost",
       exchange: "test-exchange",
       routing_key: "test-messages",
-      queue: "test-consumer-queue"
+      service: "test-service"
 
     def handle_message(message) do
       IO.puts "here"
@@ -27,8 +27,9 @@ defmodule Tackle.ListenerTest do
 
       {response, 0} = System.cmd "sudo", ["rabbitmqctl", "list_queues"]
 
-      assert String.contains?(response, "test-consumer-queue")
-      assert String.contains?(response, "test-consumer-queue_dead_letters")
+      assert String.contains?(response, "test-service.test-messages")
+      assert String.contains?(response, "test-service.test-messages.delay.10")
+      assert String.contains?(response, "test-service.test-messages.dead")
     end
 
     it "creates an exchange on the amqp server" do
@@ -38,7 +39,7 @@ defmodule Tackle.ListenerTest do
 
       {response, 0} = System.cmd "sudo", ["rabbitmqctl", "list_exchanges"]
 
-      assert String.contains?(response, "test-exchange")
+      assert String.contains?(response, "test-service.test-messages")
     end
   end
 

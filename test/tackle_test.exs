@@ -1,12 +1,21 @@
 defmodule TackleTest do
   use ExSpec
 
+  setup do
+    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
+    {:ok, channel} = AMQP.Channel.open(connection)
+
+    AMQP.Exchange.direct(channel, "test-exchange", durable: true)
+
+    AMQP.Connection.close(connection)
+  end
+
   defmodule TestConsumer do
     use Tackle.Consumer,
       url: "amqp://localhost",
       exchange: "test-exchange",
       routing_key: "test-messages",
-      queue: "test-consumer-queue"
+      service: "test-service"
 
     def handle_message(message) do
       {:ok, file} = File.open "/tmp/messages", [:write]
@@ -43,16 +52,16 @@ defmodule TackleTest do
 
   @broken_publish_options %{
     url: "amqp://localhost",
-    exchange: "broken-exchange",
+    exchange: "test-exchange",
     routing_key: "broken-messages",
   }
 
   defmodule BrokenConsumer do
     use Tackle.Consumer,
       url: "amqp://localhost",
-      exchange: "broken-exchange",
+      exchange: "test-exchange",
       routing_key: "broken-messages",
-      queue: "broken-consumer",
+      service: "broker-service",
       retry_limit: 3,
       retry_delay: 1
 
@@ -75,15 +84,11 @@ defmodule TackleTest do
 
       Tackle.publish("Hi!", @broken_publish_options)
 
-      :timer.sleep(3000)
+      :timer.sleep(5000)
 
       GenServer.stop(consumer)
 
-      messages = File.read!("/tmp/messages")
-
-      IO.puts messages
-
-      assert String.contains?(messages, "Hi!Hi!Hi!")
+      assert File.read!("/tmp/messages") == "Hi!Hi!Hi!Hi!"
     end
   end
 
