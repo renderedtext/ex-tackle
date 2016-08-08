@@ -27,11 +27,12 @@ defmodule Tackle.DeadQueueTest do
 
   setup do
     Support.create_exchange("test-exchange")
-    Support.purge_queue(@dead_queue)
 
     {:ok, _} = DeadConsumer.start_link
 
     :timer.sleep(1000)
+
+    Support.purge_queue(@dead_queue)
   end
 
   describe "healthy consumer" do

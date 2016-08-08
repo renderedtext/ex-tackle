@@ -28,26 +28,6 @@ defmodule Support do
     AMQP.Connection.close(connection)
   end
 
-  def queue_status(queue_name) do
-    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
-    {:ok, channel} = AMQP.Channel.open(connection)
-
-    {:ok, status} = AMQP.Queue.status(channel, queue_name)
-
-    AMQP.Connection.close(connection)
-
-    status
-  end
-
-  def purge_queue(queue_name) do
-    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
-    {:ok, channel} = AMQP.Channel.open(connection)
-
-    AMQP.Queue.purge(channel, queue_name)
-
-    AMQP.Connection.close(connection)
-  end
-
   defmodule MessageTrace do
     # we should reimplement this with something nicer
     # like an in memory queue
