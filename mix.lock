@@ -1,4 +1,7 @@
 %{"amqp": {:hex, :amqp, "0.1.4", "5d9112c3a850234559073c23fda173364dfd11d8ce8d0138cd46f653fdc55f08", [:mix], [{:amqp_client, ">= 3.5.6", [hex: :amqp_client, optional: false]}]},
   "amqp_client": {:hex, :amqp_client, "3.5.6", "ed7e63122f32af1d503d134e6c1b088a0627e89c6b5c77b92984c841cb0939be", [:rebar], [{:rabbit_common, "3.5.6", [hex: :rabbit_common, optional: false]}]},
   "ex_spec": {:hex, :ex_spec, "1.0.0", "b1e791072fecbf80c725adf45e7cbdf3d96af3765638a1f1547824706ece4bc9", [:mix], []},
+  "httpotion": {:hex, :httpotion, "3.0.0", "4ce0af28f4254bdd0457d0fe065a83787751e0a5b5f5d27030948253be38df5c", [:mix], [{:ibrowse, "~> 4.2", [hex: :ibrowse, optional: false]}]},
+  "ibrowse": {:hex, :ibrowse, "4.2.2", "b32b5bafcc77b7277eff030ed32e1acc3f610c64e9f6aea19822abcadf681b4b", [:rebar3], []},
+  "poison": {:hex, :poison, "2.2.0", "4763b69a8a77bd77d26f477d196428b741261a761257ff1cf92753a0d4d24a63", [:mix], []},
   "rabbit_common": {:hex, :rabbit_common, "3.5.6", "ad541be86f08cdb1c04320eb4353ad30f25555569c95cc062af28cf79b74d085", [:rebar], []}}
