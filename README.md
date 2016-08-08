@@ -47,7 +47,7 @@ defmodule TestConsumer do
     url: "amqp://localhost",
     exchange: "test-exchange",
     routing_key: "test-messages",
-    queue: "test-consumer-queue"
+    service: "my-service"
 
   def handle_message(message) do
     IO.puts "A message arrived. Life is good!"
