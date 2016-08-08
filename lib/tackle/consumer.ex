@@ -78,7 +78,7 @@ defmodule Tackle.Consumer do
 
           AMQP.Basic.ack(state.channel, tag)
         rescue
-          e in RuntimeError ->
+          _ ->
             delayed_retry(state, payload, retry_count)
             AMQP.Basic.nack(state.channel, tag, [multiple: false, requeue: false])
         end

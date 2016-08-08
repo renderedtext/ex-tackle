@@ -63,7 +63,7 @@ defmodule TackleTest do
       IO.binwrite(file, message)
       File.close(file)
 
-      raise "Giving up"
+      :foo + 1 # raises an exception
     end
   end
 
