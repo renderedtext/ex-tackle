@@ -2,6 +2,8 @@ defmodule Tackle.Queue do
   use AMQP
   require Logger
 
+  @dead_letter_timeout 604800000 # one week in milliseconds
+
   def create_queue(channel, service_exchange) do
     queue_name = service_exchange
 
@@ -34,7 +36,12 @@ defmodule Tackle.Queue do
 
     Logger.info "Creating dead queue '#{queue_name}'"
 
-    Queue.declare(channel, queue_name, durable: true)
+    Queue.declare(channel, queue_name, [
+      durable: true,
+      arguments: [
+        {"x-message-ttl", :long, @dead_letter_timeout}
+      ]
+    ])
 
     queue_name
   end
