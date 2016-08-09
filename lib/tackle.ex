@@ -25,25 +25,7 @@ defmodule Tackle do
     routing_key = options[:routing_key]
     count = options[:count] || 1
 
-    Logger.info "Connecting to '#{url}'"
-    {:ok, connection} = AMQP.Connection.open(url)
-    channel = Tackle.Channel.create(connection)
-
-    (0..count-1) |> Enum.each(fn(index) ->
-      IO.write "(#{index}) Fetching message... "
-
-      case AMQP.Basic.get(channel, queue) do
-        {:empty, _} ->
-          IO.puts "no more messages"
-
-        {:ok, message, %{delivery_tag: tag}} ->
-          AMQP.Basic.publish(channel, exchange, routing_key, message, persistent: true)
-          AMQP.Basic.ack(channel, tag)
-          IO.puts "republished"
-      end
-    end)
-
-    AMQP.Connection.close(connection)
+    Tackle.Republisher.republish(url, queue, exchange, routing_key, count)
   end
 
 end

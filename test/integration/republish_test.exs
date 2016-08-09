@@ -1,4 +1,4 @@
-defmodule Tackle.DeadQueueTest do
+defmodule Tackle.RepublishTest do
   use ExSpec
 
   alias Support
