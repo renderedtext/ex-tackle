@@ -35,8 +35,8 @@ defmodule Tackle.DeadQueueTest do
     Support.purge_queue(@dead_queue)
   end
 
-  describe "healthy consumer" do
-    it "receives the message multiple times" do
+  describe "broken consumer" do
+    it "puts the messages o dead queue after failures" do
       assert Support.queue_status(@dead_queue).message_count == 0
 
       Tackle.publish("Hi!", @publish_options)
