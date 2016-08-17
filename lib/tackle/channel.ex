@@ -1,5 +1,6 @@
 defmodule Tackle.Channel do
   use AMQP
+  require Logger
 
   def create(connection) do
     {:ok, channel} = Channel.open(connection)

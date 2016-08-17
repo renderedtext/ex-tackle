@@ -18,4 +18,14 @@ defmodule Tackle do
     AMQP.Connection.close(connection)
   end
 
+  def republish(options) do
+    url = options[:url]
+    queue = options[:queue]
+    exchange = options[:exchange]
+    routing_key = options[:routing_key]
+    count = options[:count] || 1
+
+    Tackle.Republisher.republish(url, queue, exchange, routing_key, count)
+  end
+
 end

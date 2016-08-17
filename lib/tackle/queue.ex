@@ -1,36 +1,49 @@
 defmodule Tackle.Queue do
   use AMQP
+  require Logger
 
-  def create(channel, exchange, routing_key, queue_name, retry_delay) do
+  @dead_letter_timeout 604800000 # one week in milliseconds
+
+  def create_queue(channel, service_exchange) do
+    queue_name = service_exchange
+
+    Logger.info "Creating queue '#{queue_name}'"
+
     Queue.declare(channel, queue_name, durable: true)
 
-    Queue.declare(channel, dead_letter_queue_name(queue_name), [
+    queue_name
+  end
+
+  def create_delay_queue(channel, service_exchange, routing_key, delay) do
+    queue_name = "#{service_exchange}.delay.#{delay}"
+
+    Logger.info "Creating delay queue '#{queue_name}'"
+
+    Queue.declare(channel, queue_name, [
       durable: true,
       arguments: [
-        {"x-dead-letter-exchange", :longstr, exchange},
+        {"x-dead-letter-exchange", :longstr, service_exchange},
         {"x-dead-letter-routing-key", :longstr, routing_key},
-        {"x-message-ttl", :long, retry_delay * 1000}
+        {"x-message-ttl", :long, delay * 1000}
       ]
     ])
+
+    queue_name
   end
 
-  def bind(channel, exchange, routing_key, queue_name) do
-    dead_exchange = dead_letter_exchange_name(exchange)
-    dead_queue = dead_letter_queue_name(queue_name)
+  def create_dead_queue(channel, service_exchange) do
+    queue_name = "#{service_exchange}.dead"
 
-    Exchange.fanout(channel, dead_exchange, durable: true)
-    Exchange.direct(channel, exchange, durable: true)
+    Logger.info "Creating dead queue '#{queue_name}'"
 
-    Queue.bind(channel, dead_queue, dead_exchange, routing_key: routing_key)
-    Queue.bind(channel, queue_name, exchange, routing_key: routing_key)
-  end
+    Queue.declare(channel, queue_name, [
+      durable: true,
+      arguments: [
+        {"x-message-ttl", :long, @dead_letter_timeout}
+      ]
+    ])
 
-  def dead_letter_exchange_name(exchange) do
-    "#{exchange}.dead_letter_exchange"
-  end
-
-  def dead_letter_queue_name(queue_name) do
-    "#{queue_name}_dead_letters"
+    queue_name
   end
 
 end

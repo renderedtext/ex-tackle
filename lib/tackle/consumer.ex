@@ -8,10 +8,10 @@ defmodule Tackle.Consumer do
 
     exchange = options[:exchange]
     routing_key = options[:routing_key]
-    queue = options[:queue]
+    service = options[:service]
 
-    retry_limit = options[:retry_limit] || 10
     retry_delay = options[:retry_delay] || 10
+    retry_limit = options[:retry_limit] || 10
 
     quote do
       @behaviour Tackle.Consumer.Behaviour
@@ -24,31 +24,43 @@ defmodule Tackle.Consumer do
       end
 
       def init({}) do
-        url         = unquote(url)
-        queue_name  = unquote(queue)
-        exchange    = unquote(exchange)
+        url = unquote(url)
+        service = unquote(service)
         routing_key = unquote(routing_key)
         retry_delay = unquote(retry_delay)
         retry_limit = unquote(retry_limit)
 
-        Logger.info "Connecting to '#{url}'"
         {:ok, connection} = AMQP.Connection.open(url)
         channel = Tackle.Channel.create(connection)
 
-        Logger.info "Creating queue '#{queue_name}'"
-        Tackle.Queue.create(channel, exchange, routing_key, queue_name, retry_delay)
+        remote_exchange  = unquote(exchange)
+        service_exchange = Tackle.Exchange.create(channel, service, routing_key)
 
-        Logger.info "Bindind queue '#{queue_name}' to exchange '#{exchange}' with routing key '#{routing_key}'"
-        Tackle.Queue.bind(channel, exchange, routing_key, queue_name)
+        Tackle.Exchange.bind_to_remote(
+          channel,
+          service_exchange,
+          remote_exchange,
+          routing_key
+        )
 
-        {:ok, _consumer_tag} = AMQP.Basic.consume(channel, queue_name)
+        queue       = Tackle.Queue.create_queue(channel, service_exchange)
+        dead_queue  = Tackle.Queue.create_dead_queue(channel, service_exchange)
+        delay_queue = Tackle.Queue.create_delay_queue(channel, service_exchange, routing_key, retry_delay)
+
+        Tackle.Exchange.bind_to_queue(
+          channel,
+          service_exchange,
+          queue,
+          routing_key
+        )
+
+        {:ok, _consumer_tag} = AMQP.Basic.consume(channel, queue)
 
         state = %{
+          url: url,
           channel: channel,
-          queue_name: queue_name,
-          routing_key: routing_key,
-          exchange: exchange,
-          retry_delay: retry_delay,
+          delay_queue: delay_queue,
+          dead_queue: dead_queue,
           retry_limit: retry_limit
         }
 
@@ -60,46 +72,53 @@ defmodule Tackle.Consumer do
       def handle_info({:basic_cancel_ok, _},  state), do: {:noreply, state}
 
       def handle_info({:basic_deliver, payload, %{delivery_tag: tag, headers: headers}}, state) do
-        retry_count = retry_count_from_headers(headers)
 
-        spawn fn -> consume(state, tag, retry_count, payload) end
+        spawn fn ->
+          consume(state, tag, headers, payload)
+        end
 
         {:noreply, state}
       end
 
-      defp retry_count_from_headers(:undefined), do: 0
-      defp retry_count_from_headers([]), do: 0
-      defp retry_count_from_headers([{"retry_count", :long, retry_count} | tail]), do: retry_count
-      defp retry_count_from_headers([_ | tail]), do: retry_count_from_headers(tail)
-
-      defp consume(state, tag, retry_count, payload) do
+      defp consume(state, tag, headers, payload) do
         try do
           handle_message(payload)
 
           AMQP.Basic.ack(state.channel, tag)
         rescue
           _ ->
-            delayed_retry(state, payload, retry_count)
+            retry(state, payload, headers)
+
             AMQP.Basic.nack(state.channel, tag, [multiple: false, requeue: false])
         end
       end
 
-      defp delayed_retry(state, payload, retry_count)  do
-        if retry_count < state.retry_limit do
-          Logger.info "Sending message to the dead letters. Retry count: '#{retry_count}'"
+      defp retry(state, payload, headers) do
+        retry_count = Tackle.DelayedRetry.retry_count_from_headers(headers)
 
-          dead_exchange = Tackle.Queue.dead_letter_exchange_name(state.exchange)
-
-          options = [
-            persistent: true,
-            headers: [
-              retry_count: retry_count + 1
-            ]
+        options = [
+          persistent: true,
+          headers: [
+            retry_count: retry_count + 1
           ]
+        ]
 
-          AMQP.Basic.publish(state.channel, dead_exchange, state.routing_key, payload, options)
+        if retry_count < state.retry_limit do
+          Logger.info "Sending message to a delay queue"
+
+          Tackle.DelayedRetry.publish(
+            state.url,
+            state.delay_queue,
+            payload,
+            options)
         else
-          Logger.info "Reached #{retry_count} retries. Discarding message"
+          Logger.info "Sending message to a dead messages queue"
+
+          Tackle.DelayedRetry.publish(
+            state.url,
+            state.dead_queue,
+            payload,
+            options)
         end
       end
 
