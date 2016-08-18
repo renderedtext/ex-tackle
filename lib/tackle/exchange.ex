@@ -11,6 +11,8 @@ defmodule Tackle.Exchange do
   end
 
   def bind_to_remote(channel, service_exchange, remote_exchange, routing_key) do
+    Exchange.direct(channel, remote_exchange, durable: true)
+
     Logger.info "Binding '#{service_exchange}' to '#{remote_exchange}' with '#{routing_key}' routing keys"
 
     Exchange.bind(channel, service_exchange, remote_exchange, routing_key: routing_key)
