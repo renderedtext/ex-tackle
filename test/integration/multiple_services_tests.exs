@@ -46,8 +46,6 @@ defmodule Tackle.MultipleServicesTest do
   }
 
   setup do
-    Support.create_exchange("test-exchange")
-
     {:ok, serviceA} = ServiceA.start_link
     {:ok, serviceB} = ServiceB.start_link
 

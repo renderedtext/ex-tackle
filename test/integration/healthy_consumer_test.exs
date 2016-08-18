@@ -23,8 +23,6 @@ defmodule Tackle.HealthyConsumerTest do
   }
 
   setup do
-    Support.create_exchange("test-exchange")
-
     MessageTrace.clear("healthy-service")
 
     {:ok, _} = TestConsumer.start_link

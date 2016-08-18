@@ -26,8 +26,6 @@ defmodule Tackle.DeadQueueTest do
   @dead_queue "dead-service.test-messages.dead"
 
   setup do
-    Support.create_exchange("test-exchange")
-
     {:ok, _} = DeadConsumer.start_link
 
     :timer.sleep(1000)

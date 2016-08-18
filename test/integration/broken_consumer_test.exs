@@ -27,8 +27,6 @@ defmodule Tackle.BrokenConsumerTest do
   }
 
   setup do
-    Support.create_exchange("test-exchange")
-
     MessageTrace.clear("broken-service")
 
     {:ok, _} = BrokenConsumer.start_link
