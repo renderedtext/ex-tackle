@@ -1,7 +1,18 @@
 # Tackle
 
-Tackle everything with Elixir!
-Tackle is a simplified AMQP client.
+[![Build Status](https://semaphoreci.com/api/v1/projects/ed643936-2795-4ac4-b225-7d33947d4a54/862273/badge.svg)](https://semaphoreci.com/renderedtext/ex-tackle)
+
+Tackles the problem of processing asynchronous jobs in reliable manner
+by relying on RabbitMQ.
+
+You should also take a look at [Ruby Tackle](https://github.com/renderedtext/tackle).
+
+## Why should I use tackle?
+
+- It is ideal for fast microservice prototyping
+- It uses sane defaults for queue and exchange creation
+- It retries messages that fail to be processed
+- It stores unprocessed messages into a __dead__ queue for later inspection
 
 ## Installation
 
