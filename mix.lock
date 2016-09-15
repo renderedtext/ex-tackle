@@ -1,6 +1,5 @@
 %{"amqp": {:hex, :amqp, "0.1.4", "5d9112c3a850234559073c23fda173364dfd11d8ce8d0138cd46f653fdc55f08", [:mix], [{:amqp_client, ">= 3.5.6", [hex: :amqp_client, optional: false]}]},
   "amqp_client": {:hex, :amqp_client, "3.5.6", "ed7e63122f32af1d503d134e6c1b088a0627e89c6b5c77b92984c841cb0939be", [:rebar], [{:rabbit_common, "3.5.6", [hex: :rabbit_common, optional: false]}]},
-  "elixir_thrift_serializer": {:git, "https://github.com/renderedtext/elixir-thrift-serializer.git", "c388369b5e47ba2fbe6b6c6fe7223aa697a536a2", []},
   "ex_spec": {:hex, :ex_spec, "2.0.0", "7fedc6f3f7fe9b5bc14f17f94199cac4d2abe389727291467ee7708dcf6544a0", [:mix], []},
   "exlager": {:git, "https://github.com/khia/exlager.git", "78d4ebedf4ea1e31ad2aa202632172a4f775efa8", []},
   "goldrush": {:git, "git://github.com/DeadZen/goldrush.git", "212299233c7e7eb63a97be2777e1c05ebaa58dbe", [tag: "0.1.8"]},

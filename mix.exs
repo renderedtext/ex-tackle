@@ -10,14 +10,13 @@ defmodule Tackle.Mixfile do
      deps: deps]
   end
   def application do
-    [applications: [:logger, :amqp, :elixir_thrift_serializer]]
+    [applications: [:logger, :amqp]]
   end
 
   defp deps do
     [
       {:amqp, "~> 0.1.4"},
       {:ex_spec, "~> 2.0", only: :test},
-      {:elixir_thrift_serializer, github: "renderedtext/elixir-thrift-serializer"}
     ]
   end
 end
