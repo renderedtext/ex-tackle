@@ -1,4 +1,12 @@
 %{"amqp": {:hex, :amqp, "0.1.4", "5d9112c3a850234559073c23fda173364dfd11d8ce8d0138cd46f653fdc55f08", [:mix], [{:amqp_client, ">= 3.5.6", [hex: :amqp_client, optional: false]}]},
   "amqp_client": {:hex, :amqp_client, "3.5.6", "ed7e63122f32af1d503d134e6c1b088a0627e89c6b5c77b92984c841cb0939be", [:rebar], [{:rabbit_common, "3.5.6", [hex: :rabbit_common, optional: false]}]},
-  "ex_spec": {:hex, :ex_spec, "1.0.0", "b1e791072fecbf80c725adf45e7cbdf3d96af3765638a1f1547824706ece4bc9", [:mix], []},
-  "rabbit_common": {:hex, :rabbit_common, "3.5.6", "ad541be86f08cdb1c04320eb4353ad30f25555569c95cc062af28cf79b74d085", [:rebar], []}}
+  "elixir_thrift_serializer": {:git, "https://github.com/renderedtext/elixir-thrift-serializer.git", "c388369b5e47ba2fbe6b6c6fe7223aa697a536a2", []},
+  "ex_spec": {:hex, :ex_spec, "2.0.0", "7fedc6f3f7fe9b5bc14f17f94199cac4d2abe389727291467ee7708dcf6544a0", [:mix], []},
+  "exlager": {:git, "https://github.com/khia/exlager.git", "78d4ebedf4ea1e31ad2aa202632172a4f775efa8", []},
+  "goldrush": {:git, "git://github.com/DeadZen/goldrush.git", "212299233c7e7eb63a97be2777e1c05ebaa58dbe", [tag: "0.1.8"]},
+  "lager": {:git, "https://github.com/basho/lager.git", "8187757388c9adc915379caaab36a2f2ca26e944", []},
+  "meck": {:hex, :meck, "0.8.4", "59ca1cd971372aa223138efcf9b29475bde299e1953046a0c727184790ab1520", [:rebar, :make], []},
+  "mock": {:git, "https://github.com/jjh42/mock.git", "13c3b40f0e849c018e6b8afbc9d7da899cf4db1b", []},
+  "rabbit_common": {:hex, :rabbit_common, "3.5.6", "ad541be86f08cdb1c04320eb4353ad30f25555569c95cc062af28cf79b74d085", [:rebar], []},
+  "riffed": {:git, "https://github.com/pinterest/riffed.git", "ca083d52d4ecfad822432da3925f644bc748f260", [tag: "1.0.0", submodules: true]},
+  "thrift": {:git, "https://github.com/pinterest/elixir-thrift.git", "9c3871cc9568eaf23c701ae11dece7bb5790b8ab", [tag: "1.0.0", submodules: true]}}

@@ -1,0 +1,40 @@
+2016-09-15 16:18:23.983 [error] <0.655.0> Supervisor 'Elixir.Logger.Supervisor' had child 'Elixir.Logger.ErrorHandler' started with 'Elixir.Logger.Watcher':watcher(error_logger, 'Elixir.Logger.ErrorHandler', {true,false,500}, link) at <0.660.0> exit with reason normal in context child_terminated
+2016-09-15 16:18:24.124 [info] <0.7.0> Application lager started on node nonode@nohost
+2016-09-15 16:18:24.124 [info] <0.7.0> Application exlager started on node nonode@nohost
+2016-09-15 16:18:24.125 [info] <0.7.0> Application riffed started on node nonode@nohost
+2016-09-15 16:18:24.125 [info] <0.7.0> Application elixir_thrift_serializer started on node nonode@nohost
+2016-09-15 16:18:24.125 [info] <0.7.0> Application tackle started on node nonode@nohost
+2016-09-15 16:18:24.226 [info] <0.7.0> Application ex_unit started on node nonode@nohost
+2016-09-15 16:24:11.577 [error] <0.485.0> Supervisor 'Elixir.Logger.Supervisor' had child 'Elixir.Logger.ErrorHandler' started with 'Elixir.Logger.Watcher':watcher(error_logger, 'Elixir.Logger.ErrorHandler', {true,false,500}, link) at <0.490.0> exit with reason normal in context child_terminated
+2016-09-15 16:24:11.699 [info] <0.7.0> Application lager started on node nonode@nohost
+2016-09-15 16:24:11.700 [info] <0.7.0> Application exlager started on node nonode@nohost
+2016-09-15 16:24:11.700 [info] <0.7.0> Application riffed started on node nonode@nohost
+2016-09-15 16:24:11.700 [info] <0.7.0> Application elixir_thrift_serializer started on node nonode@nohost
+2016-09-15 16:24:11.700 [info] <0.7.0> Application tackle started on node nonode@nohost
+2016-09-15 16:24:11.802 [info] <0.7.0> Application ex_unit started on node nonode@nohost
+2016-09-15 16:28:24.276 [error] <0.141.0> Supervisor 'Elixir.Logger.Supervisor' had child 'Elixir.Logger.ErrorHandler' started with 'Elixir.Logger.Watcher':watcher(error_logger, 'Elixir.Logger.ErrorHandler', {true,false,500}, link) at <0.146.0> exit with reason normal in context child_terminated
+2016-09-15 16:28:24.467 [info] <0.7.0> Application lager started on node nonode@nohost
+2016-09-15 16:28:24.467 [info] <0.7.0> Application exlager started on node nonode@nohost
+2016-09-15 16:28:24.467 [info] <0.7.0> Application riffed started on node nonode@nohost
+2016-09-15 16:28:24.468 [info] <0.7.0> Application elixir_thrift_serializer started on node nonode@nohost
+2016-09-15 16:28:24.468 [info] <0.7.0> Application tackle started on node nonode@nohost
+2016-09-15 16:28:24.635 [info] <0.7.0> Application ex_unit started on node nonode@nohost
+2016-09-15 16:28:30.722 [warning] <0.6.0> lager_error_logger_h dropped 1 messages in the last second that exceeded the limit of 50 messages/sec
+2016-09-15 16:29:03.428 [warning] <0.6.0> lager_error_logger_h dropped 7 messages in the last second that exceeded the limit of 50 messages/sec
+2016-09-15 16:29:04.547 [warning] <0.6.0> lager_error_logger_h dropped 15 messages in the last second that exceeded the limit of 50 messages/sec
+2016-09-15 16:29:05.579 [warning] <0.6.0> lager_error_logger_h dropped 12 messages in the last second that exceeded the limit of 50 messages/sec
+2016-09-15 16:29:06.789 [warning] <0.6.0> lager_error_logger_h dropped 5 messages in the last second that exceeded the limit of 50 messages/sec
+2016-09-15 16:29:10.805 [warning] <0.6.0> lager_error_logger_h dropped 21 messages in the last second that exceeded the limit of 50 messages/sec
+2016-09-15 16:29:11.838 [warning] <0.6.0> lager_error_logger_h dropped 7 messages in the last second that exceeded the limit of 50 messages/sec
+2016-09-15 16:29:12.871 [warning] <0.6.0> lager_error_logger_h dropped 5 messages in the last second that exceeded the limit of 50 messages/sec
+2016-09-15 16:30:39.242 [error] <0.141.0> Supervisor 'Elixir.Logger.Supervisor' had child 'Elixir.Logger.ErrorHandler' started with 'Elixir.Logger.Watcher':watcher(error_logger, 'Elixir.Logger.ErrorHandler', {true,false,500}, link) at <0.146.0> exit with reason normal in context child_terminated
+2016-09-15 16:30:39.423 [info] <0.7.0> Application lager started on node nonode@nohost
+2016-09-15 16:30:39.424 [info] <0.7.0> Application exlager started on node nonode@nohost
+2016-09-15 16:30:39.424 [info] <0.7.0> Application riffed started on node nonode@nohost
+2016-09-15 16:30:39.424 [info] <0.7.0> Application elixir_thrift_serializer started on node nonode@nohost
+2016-09-15 16:30:39.424 [info] <0.7.0> Application tackle started on node nonode@nohost
+2016-09-15 16:30:39.529 [info] <0.7.0> Application ex_unit started on node nonode@nohost
+2016-09-15 16:30:59.422 [warning] <0.6.0> lager_error_logger_h dropped 11 messages in the last second that exceeded the limit of 50 messages/sec
+2016-09-15 16:31:00.527 [warning] <0.6.0> lager_error_logger_h dropped 49 messages in the last second that exceeded the limit of 50 messages/sec
+2016-09-15 16:31:01.559 [warning] <0.6.0> lager_error_logger_h dropped 34 messages in the last second that exceeded the limit of 50 messages/sec
+2016-09-15 16:31:03.036 [warning] <0.6.0> lager_error_logger_h dropped 6 messages in the last second that exceeded the limit of 50 messages/sec
