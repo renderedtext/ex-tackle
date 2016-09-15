@@ -13,6 +13,8 @@ defmodule Tackle.Consumer do
     retry_delay = options[:retry_delay] || 10
     retry_limit = options[:retry_limit] || 10
 
+    #Module.overridable(__MODULE__, [{"before_consume", 1}])
+
     quote do
       @behaviour Tackle.Consumer.Behaviour
 
@@ -82,6 +84,11 @@ defmodule Tackle.Consumer do
 
       defp consume(state, tag, headers, payload) do
         try do
+          ######################################
+          #ITS OVER HERE!
+          ######################################
+          #before_consume(payload)
+          #|> handle_message
           handle_message(payload)
 
           AMQP.Basic.ack(state.channel, tag)
@@ -122,6 +129,9 @@ defmodule Tackle.Consumer do
         end
       end
 
+      #def before_consume(message) do
+      #  message
+      #end
     end
   end
 end
