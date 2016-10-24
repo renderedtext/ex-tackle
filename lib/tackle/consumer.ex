@@ -72,24 +72,30 @@ defmodule Tackle.Consumer do
       def handle_info({:basic_cancel_ok, _},  state), do: {:noreply, state}
 
       def handle_info({:basic_deliver, payload, %{delivery_tag: tag, headers: headers}}, state) do
-
-        spawn fn ->
-          consume(state, tag, headers, payload)
+        consume_callback = fn ->
+          handle_message(payload)
+          AMQP.Basic.ack(state.channel, tag)
         end
+
+        error_callback = fn reason ->
+          Logger.error "Consumption failed: #{inspect reason}; payload: #{inspect payload}"
+          retry(state, payload, headers)
+          AMQP.Basic.nack(state.channel, tag, [multiple: false, requeue: false])
+        end
+
+        delivery_handler(consume_callback, error_callback)
 
         {:noreply, state}
       end
 
-      defp consume(state, tag, headers, payload) do
-        try do
-          handle_message(payload)
+      def delivery_handler(consume_callback, error_callback) do
+        Process.flag(:trap_exit, true)
 
-          AMQP.Basic.ack(state.channel, tag)
-        rescue
-          _ ->
-            retry(state, payload, headers)
+        pid = spawn_link(consume_callback)
 
-            AMQP.Basic.nack(state.channel, tag, [multiple: false, requeue: false])
+        receive do
+          {:EXIT, pid, :normal} -> :ok
+          {:EXIT, pid, reason} -> error_callback.(reason)
         end
       end
 

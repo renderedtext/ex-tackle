@@ -47,4 +47,5 @@ defmodule Support do
 
 end
 
-ExUnit.start()
+ExUnit.start([trace: true])
+
