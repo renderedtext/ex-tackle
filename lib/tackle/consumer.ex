@@ -3,6 +3,9 @@ defmodule Tackle.Consumer do
     @callback handle_message(String.t) :: any
   end
 
+  # Sequential message handling by default
+  @prefetch_count 1
+
   defmacro __using__(options) do
     url = options[:url]
 
@@ -12,6 +15,8 @@ defmodule Tackle.Consumer do
 
     retry_delay = options[:retry_delay] || 10
     retry_limit = options[:retry_limit] || 10
+
+    prefetch_count = options[:prefetch_count] || @prefetch_count
 
     quote do
       @behaviour Tackle.Consumer.Behaviour
@@ -29,9 +34,10 @@ defmodule Tackle.Consumer do
         routing_key = unquote(routing_key)
         retry_delay = unquote(retry_delay)
         retry_limit = unquote(retry_limit)
+        prefetch_count = unquote(prefetch_count)
 
         {:ok, connection} = AMQP.Connection.open(url)
-        channel = Tackle.Channel.create(connection)
+        channel = Tackle.Channel.create(connection, prefetch_count)
 
         remote_exchange  = unquote(exchange)
         service_exchange = Tackle.Exchange.create(channel, service, routing_key)
@@ -83,7 +89,7 @@ defmodule Tackle.Consumer do
           AMQP.Basic.nack(state.channel, tag, [multiple: false, requeue: false])
         end
 
-        delivery_handler(consume_callback, error_callback)
+        spawn(fn-> delivery_handler(consume_callback, error_callback) end)
 
         {:noreply, state}
       end

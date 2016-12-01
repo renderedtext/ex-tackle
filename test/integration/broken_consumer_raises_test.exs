@@ -9,12 +9,12 @@ defmodule Tackle.BrokenConsumerRaisesTest do
       url: "amqp://localhost",
       exchange: "test-exchange",
       routing_key: "test-messages",
-      service: "broken-service",
+      service: "broken-service-raise",
       retry_delay: 1,
       retry_limit: 3
 
     def handle_message(message) do
-      message |> MessageTrace.save("broken-service")
+      message |> MessageTrace.save("broken-service-raise")
 
       raise "Raised!"
     end
@@ -27,7 +27,7 @@ defmodule Tackle.BrokenConsumerRaisesTest do
   }
 
   setup do
-    MessageTrace.clear("broken-service")
+    MessageTrace.clear("broken-service-raise")
 
     {:ok, _} = BrokenConsumer.start_link
 
@@ -40,7 +40,7 @@ defmodule Tackle.BrokenConsumerRaisesTest do
 
       :timer.sleep(5000)
 
-      assert MessageTrace.content("broken-service") == "Hi!Hi!Hi!Hi!"
+      assert MessageTrace.content("broken-service-raise") == "Hi!Hi!Hi!Hi!"
     end
   end
 end
