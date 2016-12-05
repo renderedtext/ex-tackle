@@ -2,11 +2,14 @@ defmodule Tackle.Channel do
   use AMQP
   require Logger
 
-  def create(connection) do
+  @prefetch_count 1
+
+  def create(connection) do create(connection, @prefetch_count) end
+  def create(connection, nil) do create(connection, @prefetch_count) end
+  def create(connection, prefetch_count) do
     {:ok, channel} = Channel.open(connection)
 
-    # Limit unacknowledged messages to 10
-    Basic.qos(channel, prefetch_count: 10)
+    Basic.qos(channel, prefetch_count: prefetch_count)
 
     channel
   end

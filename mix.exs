@@ -3,7 +3,7 @@ defmodule Tackle.Mixfile do
 
   def project do
     [app: :tackle,
-     version: "0.0.1",
+     version: "0.1.1",
      elixir: "~> 1.2",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
