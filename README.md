@@ -99,3 +99,29 @@ The above will pull one message from the `dead_queue_name` and publish it on the
 `test-exchange` exchange with `test-messages` routing key.
 
 To republish multiple messages, use a bigger `count` number.
+
+## Opening multiple channels through the same connection
+
+By default each channel (consumer) opens separate connection to the server.
+
+If you want to reduce number of opened connections from one Elixir application
+to RabbitMQ server, you can map multiple channels to single connection.
+
+Each connection can have name, supplied as optional parameter `connection_id`.
+All consumers that have the same connection name share single connection.
+
+Parameter `connection_id` is optional and if not supplied,
+`connection_id` is set to `:default`.
+Value `:default` has exceptional semantic: all channels with `connection_id`
+set to `:default` use separate connections - one channel per `:default` connection.
+
+#### To use this feature
+
+In consumer specification use `connection_id` parameter:
+```
+defmodule Consumer do
+  use Tackle.Consumer,
+    url: "...",
+    connection_id: :connection_identifier,
+    ...
+```

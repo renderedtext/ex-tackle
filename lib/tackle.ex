@@ -1,5 +1,18 @@
 defmodule Tackle do
+  use Application
+
   require Logger
+
+  def start(_type, _args) do
+    import Supervisor.Spec, warn: false
+
+    children = [
+      worker(Tackle.Connection, []),
+    ]
+
+    opts = [strategy: :one_for_one, name: Tackle.Supervisor]
+    Supervisor.start_link(children, opts)
+  end
 
   def publish(message, options) do
     url = options[:url]
