@@ -18,6 +18,8 @@ defmodule Tackle.Consumer do
 
     prefetch_count = options[:prefetch_count] || @prefetch_count
 
+    connection_id = options[:connection_id] || :default
+
     quote do
       @behaviour Tackle.Consumer.Behaviour
 
@@ -35,8 +37,9 @@ defmodule Tackle.Consumer do
         retry_delay = unquote(retry_delay)
         retry_limit = unquote(retry_limit)
         prefetch_count = unquote(prefetch_count)
+        connection_id  = unquote(connection_id)
 
-        {:ok, connection} = AMQP.Connection.open(url)
+        {:ok, connection} = Tackle.Connection.open(connection_id, url)
         channel = Tackle.Channel.create(connection, prefetch_count)
 
         remote_exchange  = unquote(exchange)
