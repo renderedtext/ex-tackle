@@ -86,7 +86,7 @@ dead_queue_name = "my-service.test-message.dead"
 
 options = {
   url: "amqp://localhost",
-  qeueu: dead_queue_name,
+  queue: dead_queue_name,
   exchange: "test-exchange",
   routing_key: "test-messages",
   count: 1
