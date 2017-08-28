@@ -1,4 +1,4 @@
-%{"amqp": {:hex, :amqp, "0.1.4", "5d9112c3a850234559073c23fda173364dfd11d8ce8d0138cd46f653fdc55f08", [:mix], [{:amqp_client, ">= 3.5.6", [hex: :amqp_client, optional: false]}]},
-  "amqp_client": {:hex, :amqp_client, "3.5.6", "ed7e63122f32af1d503d134e6c1b088a0627e89c6b5c77b92984c841cb0939be", [:rebar], [{:rabbit_common, "3.5.6", [hex: :rabbit_common, optional: false]}]},
-  "ex_spec": {:hex, :ex_spec, "1.0.0", "b1e791072fecbf80c725adf45e7cbdf3d96af3765638a1f1547824706ece4bc9", [:mix], []},
-  "rabbit_common": {:hex, :rabbit_common, "3.5.6", "ad541be86f08cdb1c04320eb4353ad30f25555569c95cc062af28cf79b74d085", [:rebar], []}}
+%{"amqp": {:hex, :amqp, "0.3.0", "45c26acbc63507e4bf7fe9b2e7e32733dcf478a1695439baedc4690722b652d1", [], [{:amqp_client, "~> 3.6.8", [hex: :amqp_client, repo: "hexpm", optional: false]}, {:rabbit_common, "~> 3.6.8", [hex: :rabbit_common, repo: "hexpm", optional: false]}], "hexpm"},
+  "amqp_client": {:hex, :amqp_client, "3.6.11", "4d3d5d4d4d79f0d3b1ea98c7040446385a3c60c8125a233c675e772279088627", [], [{:rabbit_common, "3.6.11", [hex: :rabbit_common, repo: "hexpm", optional: false]}], "hexpm"},
+  "ex_spec": {:hex, :ex_spec, "2.0.1", "8bdbd6fa85995fbf836ed799571d44be6f9ebbcace075209fd0ad06372c111cf", [:mix], [], "hexpm"},
+  "rabbit_common": {:hex, :rabbit_common, "3.6.11", "b3b369d985a46e8689f961403b3157d35f83d259a746be32fb6feef7cad27f28", [], [], "hexpm"}}
