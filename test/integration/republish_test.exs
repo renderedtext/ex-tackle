@@ -8,13 +8,13 @@ defmodule Tackle.RepublishTest do
     use Tackle.Consumer,
       url: "amqp://localhost",
       exchange: "test-exchange",
-      routing_key: "test-messages",
+      routing_key: "test-messages-republish",
       service: "republish-service",
       retry_delay: 1,
       retry_limit: 1
 
-    def handle_message(message) do
-      :a + 1 # exception
+    def handle_message(_message) do
+      throw("Exception thrown!")
     end
   end
 
@@ -22,7 +22,7 @@ defmodule Tackle.RepublishTest do
     use Tackle.Consumer,
       url: "amqp://localhost",
       exchange: "test-exchange",
-      routing_key: "test-messages",
+      routing_key: "test-messages-republish",
       service: "republish-service",
       retry_delay: 1,
       retry_limit: 3
@@ -35,25 +35,24 @@ defmodule Tackle.RepublishTest do
   @publish_options %{
     url: "amqp://localhost",
     exchange: "test-exchange",
-    routing_key: "test-messages",
+    routing_key: "test-messages-republish",
   }
 
-  @dead_queue "republish-service.test-messages.dead"
+  @dead_queue "republish-service.test-messages-republish.dead"
 
   setup do
-    Support.create_exchange("test-exchange")
+    MessageTrace.setup()
   end
 
   describe "republishing" do
     setup do
-      #
-      # consume with a broken consumer
-      #
-
+      # consume with a broken consumer so that there are messages
+      # im the dead queue
       {:ok, broken_consumer} = BrokenConsumer.start_link
       :timer.sleep(1000)
 
       Support.purge_queue(@dead_queue)
+      # ensure that the dead queue is empty
       assert Support.queue_status(@dead_queue).message_count == 0
 
       Tackle.publish("Hi ", @publish_options)
@@ -68,7 +67,6 @@ defmodule Tackle.RepublishTest do
       #
       # stop the broken consumer
       #
-
       GenServer.stop(broken_consumer)
       assert Support.queue_status(@dead_queue).message_count == 3
       :timer.sleep(1000)
@@ -76,8 +74,6 @@ defmodule Tackle.RepublishTest do
       #
       # start another consumer that fixes the issue
       #
-
-      MessageTrace.clear("fixed-service")
       {:ok, _} = FixedConsumer.start_link
       :timer.sleep(1000)
 
@@ -85,7 +81,7 @@ defmodule Tackle.RepublishTest do
         url: "amqp://localhost",
         queue: @dead_queue,
         exchange: "test-exchange",
-        routing_key: "test-messages",
+        routing_key: "test-messages-republish",
         count: 2
       })
 
