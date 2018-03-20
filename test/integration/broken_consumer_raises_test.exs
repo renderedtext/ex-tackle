@@ -1,21 +1,19 @@
 defmodule Tackle.BrokenConsumerRaisesTest do
   use ExSpec
 
-  alias Support
   alias Support.MessageTrace
 
   defmodule BrokenConsumer do
     use Tackle.Consumer,
       url: "amqp://localhost",
       exchange: "test-exchange",
-      routing_key: "test-messages",
+      routing_key: "test-messages-raises",
       service: "broken-service-raise",
       retry_delay: 1,
       retry_limit: 3
 
     def handle_message(message) do
       message |> MessageTrace.save("broken-service-raise")
-
       raise "Raised!"
     end
   end
@@ -23,14 +21,12 @@ defmodule Tackle.BrokenConsumerRaisesTest do
   @publish_options %{
     url: "amqp://localhost",
     exchange: "test-exchange",
-    routing_key: "test-messages",
+    routing_key: "test-messages-raises",
   }
 
   setup do
-    MessageTrace.clear("broken-service-raise")
-
-    {:ok, _} = BrokenConsumer.start_link
-
+    MessageTrace.setup()
+    BrokenConsumer.start_link
     :timer.sleep(1000)
   end
 

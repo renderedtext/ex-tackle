@@ -29,23 +29,36 @@ defmodule Support do
   end
 
   defmodule MessageTrace do
-    # we should reimplement this with something nicer
-    # like an in memory queue
+    @test_store_name :test_store
+
+    def reset, do: :ets.delete(@test_store_name)
+
+    def setup do
+      :ets.new(@test_store_name, [:set, :public, :named_table])
+      :ok
+    end
 
     def save(message, trace_name) do
-      File.write("/tmp/#{trace_name}", message, [:append])
+      stored = :ets.lookup(@test_store_name, trace_name)
+      case List.first(stored) do
+        nil -> :ets.insert(@test_store_name, {trace_name, message})
+        {_trace_name, value} -> :ets.insert(@test_store_name, {trace_name, Enum.join([value, message], "")})
+      end
     end
 
     def clear(trace_name) do
-      File.rm_rf("/tmp/#{trace_name}")
+      :ets.delete_object(@test_store_name, trace_name)
     end
 
     def content(trace_name) do
-      File.read!("/tmp/#{trace_name}")
+      stored_value = :ets.lookup(@test_store_name, trace_name)
+      case List.first(stored_value) do
+        {_trace_name, value} -> value
+        _ -> nil
+      end
     end
   end
 
 end
 
 ExUnit.start([trace: true])
-

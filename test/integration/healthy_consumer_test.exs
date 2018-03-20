@@ -23,10 +23,8 @@ defmodule Tackle.HealthyConsumerTest do
   }
 
   setup do
-    MessageTrace.clear("healthy-service")
-
-    {:ok, _} = TestConsumer.start_link
-
+    MessageTrace.setup()
+    TestConsumer.start_link
     :timer.sleep(1000)
   end
 

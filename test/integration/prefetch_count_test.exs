@@ -2,7 +2,6 @@ defmodule Tackle.ParallelMessageHandling_1_Test do
   use ExSpec
 
   alias Support
-  alias Support.MessageTrace
 
   defmodule TestConsumer do
     use Tackle.Consumer,
@@ -13,9 +12,9 @@ defmodule Tackle.ParallelMessageHandling_1_Test do
 
     def handle_message(message) do
       "#PID" <> spid = message
-      sup = spid |> String.to_char_list |> :erlang.list_to_pid
+      sup = spid |> String.to_charlist |> :erlang.list_to_pid
       Task.Supervisor.async_nolink(sup, fn-> :timer.sleep :infinity end)
-      receive do msg -> nil end
+      receive do _msg -> nil end
     end
   end
 

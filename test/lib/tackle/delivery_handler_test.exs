@@ -9,17 +9,15 @@ defmodule Tackle.DeliveryHandlerTest do
       routing_key: "test-messages",
       service: "test-service"
 
-    def handle_message(message) do
-      IO.puts "here"
-    end
+    def handle_message(_message), do: :nothing
   end
 
 
   describe "delivery" do
     it "consume pass" do
       assert :ok == TestConsumer.delivery_handler(
-        fn -> :ok end, 
-        fn a -> :error end)
+        fn -> :ok end,
+        fn _a -> :error end)
     end
 
     it "consume generates arithmetic exception" do
@@ -42,7 +40,7 @@ defmodule Tackle.DeliveryHandlerTest do
 
     it "consume signals" do
       assert :foo ==
-        TestConsumer.delivery_handler(fn->Process.exit(self, :foo) end, fn reason -> reason end)
+        TestConsumer.delivery_handler(fn->Process.exit(self(), :foo) end, fn reason -> reason end)
     end
   end
 end
