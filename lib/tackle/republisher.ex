@@ -3,7 +3,7 @@ defmodule Tackle.Republisher do
   require Logger
 
   def republish(url, queue, exchange, routing_key, count) do
-    Logger.info("Connecting to '#{url}'")
+    Logger.info("Connecting to '#{Tackle.DebugHelper.safe_uri(url)}'")
     {:ok, connection} = AMQP.Connection.open(url)
     channel = Tackle.Channel.create(connection)
 
