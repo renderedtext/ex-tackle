@@ -19,7 +19,8 @@ defmodule Tackle.Mixfile do
   defp deps do
     [
       {:amqp, "~> 0.3"},
-      {:ex_spec, "~> 2.0", only: :test}
+      {:ex_spec, "~> 2.0", only: :test},
+      {:logger_file_backend, "~> 0.0.10", only: :test}
     ]
   end
 end
