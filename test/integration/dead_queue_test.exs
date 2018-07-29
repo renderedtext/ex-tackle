@@ -6,27 +6,34 @@ defmodule Tackle.DeadQueueTest do
   defmodule DeadConsumer do
     use Tackle.Consumer,
       url: "amqp://localhost",
-      exchange: "test-exchange",
+      exchange: "ex-tackle.test-exchange",
       routing_key: "test-messages",
-      service: "dead-service",
+      service: "ex-tackle.dead-service",
       retry_delay: 1,
       retry_limit: 3
 
-    def handle_message(message) do
-      :a + 1 # exception
+    def handle_message(_message) do
+      # exception without warning
+      Code.eval_quoted(quote do: :a + 1)
     end
   end
 
   @publish_options %{
     url: "amqp://localhost",
-    exchange: "test-exchange",
-    routing_key: "test-messages",
+    exchange: "ex-tackle.test-exchange",
+    routing_key: "test-messages"
   }
 
-  @dead_queue "dead-service.test-messages.dead"
+  @dead_queue "ex-tackle.dead-service.test-messages.dead"
 
   setup do
-    {:ok, _} = DeadConsumer.start_link
+    reset_test_exchanges_and_queues()
+
+    on_exit(fn ->
+      reset_test_exchanges_and_queues()
+    end)
+
+    {:ok, _} = DeadConsumer.start_link()
 
     :timer.sleep(1000)
 
@@ -42,5 +49,12 @@ defmodule Tackle.DeadQueueTest do
 
       assert Support.queue_status(@dead_queue).message_count == 1
     end
+  end
+
+  defp reset_test_exchanges_and_queues do
+    Support.delete_all_queues("ex-tackle.dead-service.test-messages")
+
+    Support.delete_exchange("ex-tackle.dead-service.test-messages")
+    Support.delete_exchange("ex-tackle.test-exchange")
   end
 end
