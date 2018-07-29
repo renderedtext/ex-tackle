@@ -1,20 +1,21 @@
 defmodule Tackle.MultipleServicesTest do
   use ExSpec
 
-  alias Support
   alias Support.MessageTrace
 
   defmodule ServiceA do
+    require Logger
+
     use Tackle.Consumer,
       url: "amqp://localhost",
-      exchange: "test-exchange",
+      exchange: "ex-tackle.test-exchange",
       routing_key: "a",
-      service: "serviceA",
+      service: "ex-tackle.serviceA",
       retry_delay: 1,
       retry_limit: 3
 
     def handle_message(message) do
-      IO.puts "ServiceA: received '#{message}'"
+      Logger.info("ServiceA: received '#{message}'")
 
       message |> MessageTrace.save("serviceA")
     end
@@ -22,16 +23,18 @@ defmodule Tackle.MultipleServicesTest do
 
   # broken service
   defmodule ServiceB do
+    require Logger
+
     use Tackle.Consumer,
       url: "amqp://localhost",
-      exchange: "test-exchange",
+      exchange: "ex-tackle.test-exchange",
       routing_key: "a",
-      service: "serviceB",
+      service: "ex-tackle.serviceB",
       retry_delay: 1,
       retry_limit: 3
 
     def handle_message(message) do
-      IO.puts "ServiceB: received '#{message}'"
+      Logger.info("ServiceB: received '#{message}'")
 
       message |> MessageTrace.save("serviceB")
 
@@ -41,13 +44,19 @@ defmodule Tackle.MultipleServicesTest do
 
   @publish_options %{
     url: "amqp://localhost",
-    exchange: "test-exchange",
+    exchange: "ex-tackle.test-exchange",
     routing_key: "a"
   }
 
   setup do
-    {:ok, serviceA} = ServiceA.start_link
-    {:ok, serviceB} = ServiceB.start_link
+    reset_test_exchanges_and_queues()
+
+    on_exit(fn ->
+      reset_test_exchanges_and_queues()
+    end)
+
+    {:ok, _serviceA} = ServiceA.start_link()
+    {:ok, _serviceB} = ServiceB.start_link()
 
     MessageTrace.clear("serviceA")
     MessageTrace.clear("serviceB")
@@ -80,5 +89,14 @@ defmodule Tackle.MultipleServicesTest do
 
       assert MessageTrace.content("serviceB") == "Hi!Hi!Hi!Hi!"
     end
+  end
+
+  defp reset_test_exchanges_and_queues do
+    Support.delete_all_queues("ex-tackle.serviceA.a")
+    Support.delete_all_queues("ex-tackle.serviceB.a")
+
+    Support.delete_exchange("ex-tackle.serviceA.a")
+    Support.delete_exchange("ex-tackle.serviceB.a")
+    Support.delete_exchange("ex-tackle.test-exchange")
   end
 end
