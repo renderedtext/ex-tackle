@@ -1,7 +1,6 @@
 defmodule Tackle.HealthyConsumerTest do
   use ExSpec
 
-  alias Support
   alias Support.MessageTrace
 
   defmodule TestConsumer do

@@ -1,8 +1,6 @@
 defmodule Tackle.DeadQueueTest do
   use ExSpec
 
-  alias Support
-
   defmodule DeadConsumer do
     use Tackle.Consumer,
       url: "amqp://localhost",

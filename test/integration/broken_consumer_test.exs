@@ -1,7 +1,6 @@
 defmodule Tackle.BrokenConsumerTest do
   use ExSpec
 
-  alias Support
   alias Support.MessageTrace
 
   defmodule BrokenConsumer do

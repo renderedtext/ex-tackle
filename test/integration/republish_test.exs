@@ -1,7 +1,6 @@
 defmodule Tackle.RepublishTest do
   use ExSpec
 
-  alias Support
   alias Support.MessageTrace
 
   defmodule BrokenConsumer do
@@ -14,7 +13,8 @@ defmodule Tackle.RepublishTest do
       retry_limit: 1
 
     def handle_message(message) do
-      :a + 1 # exception
+      # exception
+      :a + 1
     end
   end
 
@@ -35,7 +35,7 @@ defmodule Tackle.RepublishTest do
   @publish_options %{
     url: "amqp://localhost",
     exchange: "test-exchange",
-    routing_key: "test-messages",
+    routing_key: "test-messages"
   }
 
   @dead_queue "republish-service.test-messages.dead"
@@ -50,7 +50,7 @@ defmodule Tackle.RepublishTest do
       # consume with a broken consumer
       #
 
-      {:ok, broken_consumer} = BrokenConsumer.start_link
+      {:ok, broken_consumer} = BrokenConsumer.start_link()
       :timer.sleep(1000)
 
       Support.purge_queue(@dead_queue)
@@ -78,7 +78,7 @@ defmodule Tackle.RepublishTest do
       #
 
       MessageTrace.clear("fixed-service")
-      {:ok, _} = FixedConsumer.start_link
+      {:ok, _} = FixedConsumer.start_link()
       :timer.sleep(1000)
 
       Tackle.republish(%{
