@@ -1,7 +1,6 @@
 defmodule Tackle.BrokenConsumerRaisesTest do
   use ExSpec
 
-  alias Support
   alias Support.MessageTrace
 
   defmodule BrokenConsumer do
@@ -27,6 +26,12 @@ defmodule Tackle.BrokenConsumerRaisesTest do
   }
 
   setup do
+    reset_test_exchanges_and_queues()
+
+    on_exit(fn ->
+      reset_test_exchanges_and_queues()
+    end)
+
     MessageTrace.clear("broken-service-raise")
 
     {:ok, _} = BrokenConsumer.start_link()
@@ -42,5 +47,12 @@ defmodule Tackle.BrokenConsumerRaisesTest do
 
       assert MessageTrace.content("broken-service-raise") == "Hi!Hi!Hi!Hi!"
     end
+  end
+
+  defp reset_test_exchanges_and_queues do
+    Support.delete_all_queues("ex-tackle.broken-service-raise.test-messages")
+
+    Support.delete_exchange("ex-tackle.broken-service-raise.test-messages")
+    Support.delete_exchange("ex-tackle.test-exchange")
   end
 end

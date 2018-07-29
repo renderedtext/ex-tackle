@@ -8,6 +8,15 @@ defmodule Support do
     AMQP.Connection.close(connection)
   end
 
+  def delete_exchange(exchange_name) do
+    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
+    {:ok, channel} = AMQP.Channel.open(connection)
+
+    :ok = AMQP.Exchange.delete(channel, exchange_name)
+
+    AMQP.Connection.close(connection)
+  end
+
   def queue_status(queue_name) do
     {:ok, connection} = AMQP.Connection.open("amqp://localhost")
     {:ok, channel} = AMQP.Channel.open(connection)
@@ -24,6 +33,26 @@ defmodule Support do
     {:ok, channel} = AMQP.Channel.open(connection)
 
     AMQP.Queue.purge(channel, queue_name)
+
+    AMQP.Connection.close(connection)
+  end
+
+  def delete_queue(queue_name) do
+    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
+    {:ok, channel} = AMQP.Channel.open(connection)
+
+    {:ok, _} = AMQP.Queue.delete(channel, queue_name)
+
+    AMQP.Connection.close(connection)
+  end
+
+  def delete_all_queues(queue_name) do
+    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
+    {:ok, channel} = AMQP.Channel.open(connection)
+
+    AMQP.Queue.delete(channel, queue_name)
+    AMQP.Queue.delete(channel, queue_name <> ".dead")
+    AMQP.Queue.delete(channel, queue_name <> ".delay.1")
 
     AMQP.Connection.close(connection)
   end
