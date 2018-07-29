@@ -46,13 +46,13 @@ defmodule Support do
     AMQP.Connection.close(connection)
   end
 
-  def delete_all_queues(queue_name) do
+  def delete_all_queues(queue_name, delay \\ 1) do
     {:ok, connection} = AMQP.Connection.open("amqp://localhost")
     {:ok, channel} = AMQP.Channel.open(connection)
 
     AMQP.Queue.delete(channel, queue_name)
     AMQP.Queue.delete(channel, queue_name <> ".dead")
-    AMQP.Queue.delete(channel, queue_name <> ".delay.1")
+    AMQP.Queue.delete(channel, queue_name <> ".delay.#{delay}")
 
     AMQP.Connection.close(connection)
   end

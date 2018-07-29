@@ -7,9 +7,9 @@ defmodule Tackle.HealthyConsumerTest do
   defmodule TestConsumer do
     use Tackle.Consumer,
       url: "amqp://localhost",
-      exchange: "test-exchange",
+      exchange: "ex-tackle.test-exchange",
       routing_key: "health",
-      service: "healthy-service"
+      service: "ex-tackle.healthy-service"
 
     def handle_message(message) do
       message |> MessageTrace.save("healthy-service")
@@ -18,14 +18,20 @@ defmodule Tackle.HealthyConsumerTest do
 
   @publish_options %{
     url: "amqp://localhost",
-    exchange: "test-exchange",
-    routing_key: "health",
+    exchange: "ex-tackle.test-exchange",
+    routing_key: "health"
   }
 
   setup do
+    reset_test_exchanges_and_queues()
+
+    on_exit(fn ->
+      reset_test_exchanges_and_queues()
+    end)
+
     MessageTrace.clear("healthy-service")
 
-    {:ok, _} = TestConsumer.start_link
+    {:ok, _} = TestConsumer.start_link()
 
     :timer.sleep(1000)
   end
@@ -38,5 +44,12 @@ defmodule Tackle.HealthyConsumerTest do
 
       assert MessageTrace.content("healthy-service") == "Hi!"
     end
+  end
+
+  defp reset_test_exchanges_and_queues do
+    Support.delete_all_queues("ex-tackle.healthy-service.health", 10)
+
+    Support.delete_exchange("ex-tackle.healthy-service.health")
+    Support.delete_exchange("ex-tackle.test-exchange")
   end
 end
