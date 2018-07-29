@@ -4,9 +4,9 @@ defmodule Tackle.SharedConnection.Test do
   defmodule TestConsumer1 do
     use Tackle.Consumer,
       url: "amqp://localhost",
-      exchange: "test-multiple-channels-exchange-1",
+      exchange: "ex-tackle.test-multiple-channels-exchange-1",
       routing_key: "multiple-channels",
-      service: "multiple-channels-service-1",
+      service: "ex-tackle.multiple-channels-service-1",
       connection_id: :single_connection
 
     def handle_message(message) do
@@ -17,9 +17,9 @@ defmodule Tackle.SharedConnection.Test do
   defmodule TestConsumer2 do
     use Tackle.Consumer,
       url: "amqp://localhost",
-      exchange: "test-multiple-channels-exchange-2",
+      exchange: "ex-tackle.test-multiple-channels-exchange-2",
       routing_key: "multiple-channels",
-      service: "multiple-channels-service-2",
+      service: "ex-tackle.multiple-channels-service-2",
       connection_id: :single_connection
 
     def handle_message(message) do
@@ -29,19 +29,19 @@ defmodule Tackle.SharedConnection.Test do
 
   def message_handler(message, response) do
     "#PID" <> pid = message
-    client = pid |> String.to_char_list() |> :erlang.list_to_pid()
+    client = pid |> String.to_charlist() |> :erlang.list_to_pid()
     send(client, response)
   end
 
   @publish_options_1 %{
     url: "amqp://localhost",
-    exchange: "test-multiple-channels-exchange-1",
+    exchange: "ex-tackle.test-multiple-channels-exchange-1",
     routing_key: "multiple-channels"
   }
 
   @publish_options_2 %{
     url: "amqp://localhost",
-    exchange: "test-multiple-channels-exchange-2",
+    exchange: "ex-tackle.test-multiple-channels-exchange-2",
     routing_key: "multiple-channels"
   }
 
@@ -51,15 +51,23 @@ defmodule Tackle.SharedConnection.Test do
     :timer.sleep(100)
   end
 
+  setup do
+    reset_test_exchanges_and_queues()
+
+    on_exit(fn ->
+      reset_test_exchanges_and_queues()
+    end)
+  end
+
   describe "shared connection" do
-    it "- reopen consumers", context do
+    it "- reopen consumers" do
       {:ok, c1} = TestConsumer1.start_link()
       {:ok, c2} = TestConsumer2.start_link()
 
       # only one connection opend
       assert Tackle.Connection.get_all() |> Enum.count() == 1
 
-      verify_consumer_functionality
+      verify_consumer_functionality()
 
       # kill consumers
       Process.unlink(c1)
@@ -69,7 +77,7 @@ defmodule Tackle.SharedConnection.Test do
 
       # kill connection process
       assert Tackle.Connection.get_all() |> Enum.count() == 1
-      old_pid = get_all_connections
+      old_pid = get_all_connections()
       old_pid |> Process.exit(:kill)
 
       # restart consumers
@@ -78,15 +86,15 @@ defmodule Tackle.SharedConnection.Test do
 
       # new connection process?
       assert Tackle.Connection.get_all() |> Enum.count() == 1
-      new_pid = get_all_connections
+      new_pid = get_all_connections()
       assert old_pid != new_pid
 
-      verify_consumer_functionality
+      verify_consumer_functionality()
     end
 
     def verify_consumer_functionality do
-      Tackle.publish(self |> inspect, @publish_options_1)
-      Tackle.publish(self |> inspect, @publish_options_2)
+      Tackle.publish(self() |> inspect, @publish_options_1)
+      Tackle.publish(self() |> inspect, @publish_options_2)
 
       response = rcv() <> rcv()
       assert String.contains?(response, "consumer_1")
@@ -102,5 +110,15 @@ defmodule Tackle.SharedConnection.Test do
         msg -> msg
       end
     end
+  end
+
+  defp reset_test_exchanges_and_queues do
+    Support.delete_all_queues("ex-tackle.multiple-channels-service-1.multiple-channels", 10)
+    Support.delete_all_queues("ex-tackle.multiple-channels-service-2.multiple-channels", 10)
+
+    Support.delete_exchange("ex-tackle.multiple-channels-service-1.multiple-channels")
+    Support.delete_exchange("ex-tackle.multiple-channels-service-2.multiple-channels")
+    Support.delete_exchange("ex-tackle.test-multiple-channels-exchange-1")
+    Support.delete_exchange("ex-tackle.test-multiple-channels-exchange-2")
   end
 end
