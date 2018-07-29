@@ -44,8 +44,6 @@ defmodule Support do
       File.read!("/tmp/#{trace_name}")
     end
   end
-
 end
 
-ExUnit.start([trace: true])
-
+ExUnit.start(trace: false)

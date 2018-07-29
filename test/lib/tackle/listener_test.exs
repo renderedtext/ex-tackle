@@ -9,23 +9,23 @@ defmodule Tackle.ListenerTest do
       service: "test-service"
 
     def handle_message(message) do
-      IO.puts "here"
+      IO.puts("here")
     end
   end
 
   describe "consumer creation" do
     it "connects to amqp server without errors" do
-      {response, consumer} = TestConsumer.start_link
+      {response, consumer} = TestConsumer.start_link()
 
       assert response == :ok
     end
 
     it "creates a queue on the amqp server" do
-      {response, consumer} = TestConsumer.start_link
+      {response, consumer} = TestConsumer.start_link()
 
       :timer.sleep(1000)
 
-      {response, 0} = System.cmd "sudo", ["rabbitmqctl", "list_queues"]
+      {response, 0} = System.cmd("rabbitmqctl", ["list_queues"])
 
       assert String.contains?(response, "test-service.test-messages")
       assert String.contains?(response, "test-service.test-messages.delay.10")
@@ -33,14 +33,13 @@ defmodule Tackle.ListenerTest do
     end
 
     it "creates an exchange on the amqp server" do
-      {response, consumer} = TestConsumer.start_link
+      {response, consumer} = TestConsumer.start_link()
 
       :timer.sleep(1000)
 
-      {response, 0} = System.cmd "sudo", ["rabbitmqctl", "list_exchanges"]
+      {response, 0} = System.cmd("rabbitmqctl", ["list_exchanges"])
 
       assert String.contains?(response, "test-service.test-messages")
     end
   end
-
 end

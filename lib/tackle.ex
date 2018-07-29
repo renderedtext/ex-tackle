@@ -7,7 +7,7 @@ defmodule Tackle do
     import Supervisor.Spec, warn: false
 
     children = [
-      worker(Tackle.Connection, []),
+      worker(Tackle.Connection, [])
     ]
 
     opts = [strategy: :one_for_one, name: Tackle.Supervisor]
@@ -19,11 +19,11 @@ defmodule Tackle do
     exchange = options[:exchange]
     routing_key = options[:routing_key]
 
-    Logger.info "Connecting to '#{url}'"
+    Logger.info("Connecting to '#{url}'")
     {:ok, connection} = AMQP.Connection.open(url)
     channel = Tackle.Channel.create(connection)
 
-    Logger.info "Declaring an exchange '#{exchange}'"
+    Logger.info("Declaring an exchange '#{exchange}'")
     AMQP.Exchange.direct(channel, exchange, durable: true)
 
     AMQP.Basic.publish(channel, exchange, routing_key, message, persistent: true)
@@ -40,5 +40,4 @@ defmodule Tackle do
 
     Tackle.Republisher.republish(url, queue, exchange, routing_key, count)
   end
-
 end

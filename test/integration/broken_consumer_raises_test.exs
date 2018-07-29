@@ -7,9 +7,9 @@ defmodule Tackle.BrokenConsumerRaisesTest do
   defmodule BrokenConsumer do
     use Tackle.Consumer,
       url: "amqp://localhost",
-      exchange: "test-exchange",
+      exchange: "ex-tackle.test-exchange",
       routing_key: "test-messages",
-      service: "broken-service-raise",
+      service: "ex-tackle.broken-service-raise",
       retry_delay: 1,
       retry_limit: 3
 
@@ -22,14 +22,14 @@ defmodule Tackle.BrokenConsumerRaisesTest do
 
   @publish_options %{
     url: "amqp://localhost",
-    exchange: "test-exchange",
-    routing_key: "test-messages",
+    exchange: "ex-tackle.test-exchange",
+    routing_key: "test-messages"
   }
 
   setup do
     MessageTrace.clear("broken-service-raise")
 
-    {:ok, _} = BrokenConsumer.start_link
+    {:ok, _} = BrokenConsumer.start_link()
 
     :timer.sleep(1000)
   end
