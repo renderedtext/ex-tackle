@@ -6,24 +6,24 @@ defmodule Tackle.RepublishTest do
   defmodule BrokenConsumer do
     use Tackle.Consumer,
       url: "amqp://localhost",
-      exchange: "test-exchange",
+      exchange: "ex-tackle.test-exchange",
       routing_key: "test-messages",
-      service: "republish-service",
+      service: "ex-tackle.republish-service",
       retry_delay: 1,
       retry_limit: 1
 
-    def handle_message(message) do
-      # exception
-      :a + 1
+    def handle_message(_message) do
+      # exception without warning
+      Code.eval_quoted(quote do: :a + 1)
     end
   end
 
   defmodule FixedConsumer do
     use Tackle.Consumer,
       url: "amqp://localhost",
-      exchange: "test-exchange",
+      exchange: "ex-tackle.test-exchange",
       routing_key: "test-messages",
-      service: "republish-service",
+      service: "ex-tackle.republish-service",
       retry_delay: 1,
       retry_limit: 3
 
@@ -34,14 +34,20 @@ defmodule Tackle.RepublishTest do
 
   @publish_options %{
     url: "amqp://localhost",
-    exchange: "test-exchange",
+    exchange: "ex-tackle.test-exchange",
     routing_key: "test-messages"
   }
 
-  @dead_queue "republish-service.test-messages.dead"
+  @dead_queue "ex-tackle.republish-service.test-messages.dead"
 
   setup do
-    Support.create_exchange("test-exchange")
+    reset_test_exchanges_and_queues()
+
+    on_exit(fn ->
+      reset_test_exchanges_and_queues()
+    end)
+
+    Support.create_exchange("ex-tackle.test-exchange")
   end
 
   describe "republishing" do
@@ -84,7 +90,7 @@ defmodule Tackle.RepublishTest do
       Tackle.republish(%{
         url: "amqp://localhost",
         queue: @dead_queue,
-        exchange: "test-exchange",
+        exchange: "ex-tackle.test-exchange",
         routing_key: "test-messages",
         count: 2
       })
@@ -99,5 +105,12 @@ defmodule Tackle.RepublishTest do
     it "leaves the remaining messages in the dead qeueue" do
       assert Support.queue_status(@dead_queue).message_count == 1
     end
+  end
+
+  defp reset_test_exchanges_and_queues do
+    Support.delete_all_queues("ex-tackle.republish-service.test-messages")
+
+    Support.delete_exchange("ex-tackle.republish-service.test-messages")
+    Support.delete_exchange("ex-tackle.test-exchange")
   end
 end
