@@ -3,14 +3,16 @@ defmodule Tackle.DeliveryHandlerTest do
 
   # This is needed for delivery_handler to be generated.
   defmodule TestConsumer do
+    require Logger
+
     use Tackle.Consumer,
       url: "amqp://localhost",
-      exchange: "test-exchange",
+      exchange: "ex-tackle.test-exchange",
       routing_key: "test-messages",
-      service: "test-service"
+      service: "ex-tackle.test-service"
 
-    def handle_message(message) do
-      IO.puts("here")
+    def handle_message(_message) do
+      Logger.debug("here")
     end
   end
 
@@ -19,13 +21,17 @@ defmodule Tackle.DeliveryHandlerTest do
       assert :ok ==
                TestConsumer.delivery_handler(
                  fn -> :ok end,
-                 fn a -> :error end
+                 fn _a -> :error end
                )
     end
 
     it "consume generates arithmetic exception" do
+      bad_function = fn ->
+        Code.eval_quoted(quote do: 1 / 0)
+      end
+
       assert :badarith ==
-               TestConsumer.delivery_handler(fn -> 1 / 0 end, fn reason -> reason end)
+               TestConsumer.delivery_handler(bad_function, fn reason -> reason end)
                |> elem(0)
     end
 
@@ -45,7 +51,7 @@ defmodule Tackle.DeliveryHandlerTest do
 
     it "consume signals" do
       assert :foo ==
-               TestConsumer.delivery_handler(fn -> Process.exit(self, :foo) end, fn reason ->
+               TestConsumer.delivery_handler(fn -> Process.exit(self(), :foo) end, fn reason ->
                  reason
                end)
     end
