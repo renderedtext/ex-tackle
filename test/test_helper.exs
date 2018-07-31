@@ -1,60 +1,51 @@
 defmodule Support do
   def create_exchange(exchange_name) do
-    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
-    {:ok, channel} = AMQP.Channel.open(connection)
-
-    AMQP.Exchange.direct(channel, exchange_name, durable: true)
-
-    AMQP.Connection.close(connection)
+    execute(fn channel ->
+      AMQP.Exchange.direct(channel, exchange_name, durable: true)
+    end)
   end
 
   def delete_exchange(exchange_name) do
-    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
-    {:ok, channel} = AMQP.Channel.open(connection)
-
-    :ok = AMQP.Exchange.delete(channel, exchange_name)
-
-    AMQP.Connection.close(connection)
+    execute(fn channel ->
+      :ok = AMQP.Exchange.delete(channel, exchange_name)
+    end)
   end
 
   def queue_status(queue_name) do
-    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
-    {:ok, channel} = AMQP.Channel.open(connection)
-
-    {:ok, status} = AMQP.Queue.status(channel, queue_name)
-
-    AMQP.Connection.close(connection)
+    {:ok, status} =
+      execute(fn channel ->
+        AMQP.Queue.status(channel, queue_name)
+      end)
 
     status
   end
 
   def purge_queue(queue_name) do
-    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
-    {:ok, channel} = AMQP.Channel.open(connection)
-
-    AMQP.Queue.purge(channel, queue_name)
-
-    AMQP.Connection.close(connection)
+    execute(fn channel ->
+      AMQP.Queue.purge(channel, queue_name)
+    end)
   end
 
   def delete_queue(queue_name) do
-    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
-    {:ok, channel} = AMQP.Channel.open(connection)
-
-    {:ok, _} = AMQP.Queue.delete(channel, queue_name)
-
-    AMQP.Connection.close(connection)
+    execute(fn channel ->
+      {:ok, _} = AMQP.Queue.delete(channel, queue_name)
+    end)
   end
 
   def delete_all_queues(queue_name, delay \\ 1) do
+    execute(fn channel ->
+      AMQP.Queue.delete(channel, queue_name)
+      AMQP.Queue.delete(channel, queue_name <> ".dead")
+      AMQP.Queue.delete(channel, queue_name <> ".delay.#{delay}")
+    end)
+  end
+
+  defp execute(fun) when is_function(fun, 1) do
     {:ok, connection} = AMQP.Connection.open("amqp://localhost")
     {:ok, channel} = AMQP.Channel.open(connection)
-
-    AMQP.Queue.delete(channel, queue_name)
-    AMQP.Queue.delete(channel, queue_name <> ".dead")
-    AMQP.Queue.delete(channel, queue_name <> ".delay.#{delay}")
-
+    result = fun.(channel)
     AMQP.Connection.close(connection)
+    result
   end
 
   defmodule MessageTrace do
