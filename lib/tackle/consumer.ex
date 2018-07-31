@@ -43,7 +43,7 @@ defmodule Tackle.Consumer do
         channel = Tackle.Channel.create(connection, prefetch_count)
 
         remote_exchange = unquote(exchange)
-        service_exchange = Tackle.Exchange.create(channel, service, routing_key)
+        service_exchange = Tackle.Exchange.create_service_exchange(channel, service, routing_key)
 
         Tackle.Exchange.bind_to_remote(
           channel,

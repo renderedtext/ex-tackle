@@ -48,6 +48,7 @@ defmodule Tackle.RepublishTest do
     end)
 
     Support.create_exchange("ex-tackle.test-exchange")
+    :ok
   end
 
   describe "republishing" do

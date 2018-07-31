@@ -1,7 +1,7 @@
 defmodule Support do
   def create_exchange(exchange_name) do
     execute(fn channel ->
-      AMQP.Exchange.direct(channel, exchange_name, durable: true)
+      Tackle.Exchange.create(channel, exchange_name)
     end)
   end
 

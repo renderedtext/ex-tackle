@@ -2,16 +2,23 @@ defmodule Tackle.Exchange do
   use AMQP
   require Logger
 
-  def create(channel, service_name, routing_key) do
-    name = "#{service_name}.#{routing_key}"
+  @exchange_type Application.get_env(:tackle, :exchange_type, :direct)
 
-    Exchange.direct(channel, name, durable: true)
+  def create_service_exchange(channel, service_name, routing_key) do
+    exchange_name = "#{service_name}.#{routing_key}"
+    create(channel, exchange_name)
+  end
 
-    name
+  def create_remote_exchange(channel, exchange_name), do: create(channel, exchange_name)
+
+  def create(channel, exchange_name) do
+    Exchange.declare(channel, exchange_name, @exchange_type, durable: true)
+
+    exchange_name
   end
 
   def bind_to_remote(channel, service_exchange, remote_exchange, routing_key) do
-    Exchange.direct(channel, remote_exchange, durable: true)
+    create_remote_exchange(channel, remote_exchange)
 
     Logger.debug(
       "Binding '#{service_exchange}' to '#{remote_exchange}' with '#{routing_key}' routing keys"

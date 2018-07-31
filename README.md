@@ -125,3 +125,9 @@ defmodule Consumer do
     connection_id: :connection_identifier,
     ...
 ```
+#### Specify generated exchanges type
+
+In your `config.exs` put:
+```
+config :tackle, exchange_type: :topic
+```
