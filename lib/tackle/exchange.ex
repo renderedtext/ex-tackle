@@ -13,7 +13,7 @@ defmodule Tackle.Exchange do
   def bind_to_remote(channel, service_exchange, remote_exchange, routing_key) do
     Exchange.direct(channel, remote_exchange, durable: true)
 
-    Logger.info(
+    Logger.debug(
       "Binding '#{service_exchange}' to '#{remote_exchange}' with '#{routing_key}' routing keys"
     )
 
@@ -21,7 +21,7 @@ defmodule Tackle.Exchange do
   end
 
   def bind_to_queue(channel, service_exchange, queue, routing_key) do
-    Logger.info("Binding '#{queue}' to '#{service_exchange}' with '#{routing_key}' routing keys")
+    Logger.debug("Binding '#{queue}' to '#{service_exchange}' with '#{routing_key}' routing keys")
 
     Queue.bind(channel, queue, service_exchange, routing_key: routing_key)
   end

@@ -121,7 +121,7 @@ defmodule Tackle.Consumer do
         ]
 
         if retry_count < state.retry_limit do
-          Logger.info("Sending message to a delay queue")
+          Logger.debug("Sending message to a delay queue")
 
           Tackle.DelayedRetry.publish(
             state.url,
@@ -130,7 +130,7 @@ defmodule Tackle.Consumer do
             options
           )
         else
-          Logger.info("Sending message to a dead messages queue")
+          Logger.debug("Sending message to a dead messages queue")
 
           Tackle.DelayedRetry.publish(
             state.url,

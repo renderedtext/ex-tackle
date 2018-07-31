@@ -56,7 +56,7 @@ defmodule Tackle.Connection do
     case open(url) do
       response = {:ok, connection} ->
         Agent.update(__MODULE__, fn state -> Map.put(state, name, connection) end)
-        Logger.info("Opening new connection #{inspect(connection)} for id: #{name}")
+        Logger.debug("Opening new connection #{inspect(connection)} for id: #{name}")
         response
 
       error ->
