@@ -14,7 +14,7 @@ defmodule Tackle do
     Supervisor.start_link(children, opts)
   end
 
-  def publish(message, options) do
+  def publish(message, options) when is_binary(message) do
     url = options[:url]
     exchange = options[:exchange]
     routing_key = options[:routing_key]
