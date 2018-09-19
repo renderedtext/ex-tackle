@@ -110,7 +110,12 @@ defmodule Tackle.Consumer do
         end
       end
 
-      defp retry(state, payload, %{headers: headers} = message_metadata, error_reason) do
+      defp retry(
+             state,
+             payload,
+             %{headers: headers} = message_metadata,
+             error_reason
+           ) do
         retry_count = Tackle.DelayedRetry.retry_count_from_headers(headers)
 
         options = [
@@ -120,14 +125,16 @@ defmodule Tackle.Consumer do
           ]
         ]
 
-        current_attempt = retry_count + 1
-        max_number_of_attemts = state.retry_limit + 1
-
         Task.start(fn ->
+          current_attempt = retry_count + 1
+          max_number_of_attemts = state.retry_limit + 1
+          {may_be_erlang_error, stacktrace} = error_reason
+          elixir_exception = Exception.normalize(:error, may_be_erlang_error, stacktrace)
+
           on_error(
             payload,
             message_metadata,
-            error_reason,
+            {elixir_exception, stacktrace},
             current_attempt,
             max_number_of_attemts
           )
