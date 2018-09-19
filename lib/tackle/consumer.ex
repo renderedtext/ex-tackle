@@ -82,7 +82,7 @@ defmodule Tackle.Consumer do
       def handle_info({:basic_cancel, _}, state), do: {:stop, :normal, state}
       def handle_info({:basic_cancel_ok, _}, state), do: {:noreply, state}
 
-      def handle_info({:basic_deliver, payload, %{delivery_tag: tag, headers: headers}}, state) do
+      def handle_info({:basic_deliver, payload, %{delivery_tag: tag} = message_metadata}, state) do
         consume_callback = fn ->
           handle_message(payload)
           AMQP.Basic.ack(state.channel, tag)
@@ -90,7 +90,7 @@ defmodule Tackle.Consumer do
 
         error_callback = fn reason ->
           Logger.error("Consumption failed: #{inspect(reason)}; payload: #{inspect(payload)}")
-          retry(state, payload, headers)
+          retry(state, payload, message_metadata, reason)
           AMQP.Basic.nack(state.channel, tag, multiple: false, requeue: false)
         end
 
@@ -110,7 +110,7 @@ defmodule Tackle.Consumer do
         end
       end
 
-      defp retry(state, payload, headers) do
+      defp retry(state, payload, %{headers: headers} = message_metadata, error_reason) do
         retry_count = Tackle.DelayedRetry.retry_count_from_headers(headers)
 
         options = [
@@ -119,6 +119,19 @@ defmodule Tackle.Consumer do
             retry_count: retry_count + 1
           ]
         ]
+
+        current_attempt = retry_count + 1
+        max_number_of_attemts = state.retry_limit + 1
+
+        Task.start(fn ->
+          on_error(
+            payload,
+            message_metadata,
+            error_reason,
+            current_attempt,
+            max_number_of_attemts
+          )
+        end)
 
         if retry_count < state.retry_limit do
           Logger.debug("Sending message to a delay queue")
@@ -140,6 +153,18 @@ defmodule Tackle.Consumer do
           )
         end
       end
+
+      # TODO: Test me!!!
+      defp on_error(
+             payload,
+             message_metadata,
+             current_attempt,
+             error_reason,
+             max_number_of_attemts
+           ),
+           do: :ok
+
+      defoverridable(on_error: 5)
     end
   end
 end
