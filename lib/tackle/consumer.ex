@@ -165,8 +165,8 @@ defmodule Tackle.Consumer do
       defp on_error(
              payload,
              message_metadata,
-             current_attempt,
              error_reason,
+             current_attempt,
              max_number_of_attemts
            ),
            do: :ok
