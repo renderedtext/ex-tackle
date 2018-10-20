@@ -1,12 +1,12 @@
 defmodule TackleTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
 
   test "rapid message publishing has good performance" do
     msg = '{ "tackle" => "me" }'
 
     {:ok, c} = Tackle.Connection.open(:publisher, "amqp://localhost")
     channel  = Tackle.Channel.create(c)
-    exchange = Tackle.Exchange.create(channel, "test-exchange")
+    exchange = Tackle.Exchange.create(channel, "rapid-exchange")
 
     ms = :timer.tc(fn ->
       (1..1_000) |> Enum.each(fn _ ->

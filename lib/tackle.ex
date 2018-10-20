@@ -17,6 +17,7 @@ defmodule Tackle do
   def publish(message, options) do
     url = options[:url]
     exchange = options[:exchange]
+    routing_key = options[:routing_key]
 
     Logger.debug "Connecting to '#{url}'"
     {:ok, connection} = AMQP.Connection.open(url)
@@ -25,7 +26,7 @@ defmodule Tackle do
     Logger.debug "Declaring an exchange '#{exchange}'"
     Tackle.Exchange.create(channel, exchange)
 
-    Tackle.Exchange.publish(channel, exchange, message, options)
+    Tackle.Exchange.publish(channel, exchange, message, routing_key)
 
     AMQP.Connection.close(connection)
   end
