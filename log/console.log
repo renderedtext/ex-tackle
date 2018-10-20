@@ -1,0 +1,20 @@
+2018-10-20 20:27:33.216 [error] <0.494.0> Supervisor 'Elixir.Logger.Supervisor' had child 'Elixir.Logger.ErrorHandler' started with 'Elixir.Logger.Watcher':start_link({error_logger,'Elixir.Logger.ErrorHandler',{true,false,500}}) at <0.499.0> exit with reason normal in context child_terminated
+2018-10-20 20:27:33.239 [info] <0.33.0> Application lager started on node nonode@nohost
+2018-10-20 20:27:33.244 [info] <0.33.0> Application xmerl started on node nonode@nohost
+2018-10-20 20:27:33.247 [info] <0.33.0> Application jsx started on node nonode@nohost
+2018-10-20 20:27:33.254 [info] <0.33.0> Application ranch started on node nonode@nohost
+2018-10-20 20:27:33.256 [info] <0.33.0> Application ranch_proxy_protocol started on node nonode@nohost
+2018-10-20 20:27:33.258 [info] <0.33.0> Application recon started on node nonode@nohost
+2018-10-20 20:27:33.258 [info] <0.33.0> Application rabbit_common started on node nonode@nohost
+2018-10-20 20:27:33.265 [info] <0.33.0> Application amqp_client started on node nonode@nohost
+2018-10-20 20:27:33.265 [info] <0.33.0> Application amqp started on node nonode@nohost
+2018-10-20 20:27:33.266 [info] <0.33.0> Application tackle started on node nonode@nohost
+2018-10-20 20:27:33.305 [info] <0.33.0> Application ex_unit started on node nonode@nohost
+2018-10-20 20:27:34.519 [error] emulator Error in process <0.613.0> with exit value:
+{{nocatch,{1,3,4}},[{'Elixir.Tackle.BrokenConsumerThrowsTest.BrokenConsumer',handle_message,1,[{file,"test/integration/broken_consumer_throws_test.exs"},{line,19}]},{'Elixir.Tackle.BrokenConsumerThrowsTest.BrokenConsumer','-handle_info/2-fun-0-',3,[{file,"test/integration/broken_consumer_throws_test.exs"},{line,8}]}]}
+2018-10-20 20:27:35.528 [error] emulator Error in process <0.629.0> with exit value:
+{{nocatch,{1,3,4}},[{'Elixir.Tackle.BrokenConsumerThrowsTest.BrokenConsumer',handle_message,1,[{file,"test/integration/broken_consumer_throws_test.exs"},{line,19}]},{'Elixir.Tackle.BrokenConsumerThrowsTest.BrokenConsumer','-handle_info/2-fun-0-',3,[{file,"test/integration/broken_consumer_throws_test.exs"},{line,8}]}]}
+2018-10-20 20:27:36.533 [error] emulator Error in process <0.645.0> with exit value:
+{{nocatch,{1,3,4}},[{'Elixir.Tackle.BrokenConsumerThrowsTest.BrokenConsumer',handle_message,1,[{file,"test/integration/broken_consumer_throws_test.exs"},{line,19}]},{'Elixir.Tackle.BrokenConsumerThrowsTest.BrokenConsumer','-handle_info/2-fun-0-',3,[{file,"test/integration/broken_consumer_throws_test.exs"},{line,8}]}]}
+2018-10-20 20:27:37.541 [error] emulator Error in process <0.661.0> with exit value:
+{{nocatch,{1,3,4}},[{'Elixir.Tackle.BrokenConsumerThrowsTest.BrokenConsumer',handle_message,1,[{file,"test/integration/broken_consumer_throws_test.exs"},{line,19}]},{'Elixir.Tackle.BrokenConsumerThrowsTest.BrokenConsumer','-handle_info/2-fun-0-',3,[{file,"test/integration/broken_consumer_throws_test.exs"},{line,8}]}]}
