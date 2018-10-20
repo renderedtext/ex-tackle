@@ -2,12 +2,25 @@ defmodule Tackle.Exchange do
   use AMQP
   require Logger
 
-  def create(channel, service_name, routing_key) do
-    name = "#{service_name}.#{routing_key}"
-
+  def create(channel, name) do
     Exchange.direct(channel, name, durable: true)
 
     name
+  end
+
+  def publish(channel, exchange, message, routing_key) do
+    AMQP.Basic.publish(
+      channel,
+      exchange,
+      routing_key,
+      message,
+      persistent: true
+    )
+  end
+
+  # Used for declaring local service exchange
+  def create(channel, service_name, routing_key) do
+    create(channel, "#{service_name}.#{routing_key}")
   end
 
   def bind_to_remote(channel, service_exchange, remote_exchange, routing_key) do
