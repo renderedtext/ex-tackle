@@ -48,6 +48,25 @@ options = %{
 Tackle.publish("Hi!", options)
 ```
 
+The previous example will open a new connection, create the exchange if it
+doesn't exists, and close the connection. This makes sure that everything is
+place, but has pretty bad performance.
+
+For fast publishing of multiple messages, open a channel manually, make sure
+that the exchange exists, and publish messages with `Tackle.Exchange.publish`.
+Example:
+
+``` elixir
+{:ok, c}  = Tackle.Connection.open(:publisher, "amqp://localhost")
+channel   = Tackle.Channel.create(c)
+exchange  = Tackle.Exchange.create(channel, "test-exchange")
+route_key = "hello"
+
+(1..1_000) |> Enum.each(fn _ ->
+  Tackle.Exchange.publish(channel, exchange, "Hi!", routing_key)
+end)
+```
+
 ## Consuming messages from an exchange
 
 First, declare a consumer module:

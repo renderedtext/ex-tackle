@@ -24,9 +24,9 @@ defmodule Tackle do
     channel = Tackle.Channel.create(connection)
 
     Logger.debug "Declaring an exchange '#{exchange}'"
-    AMQP.Exchange.direct(channel, exchange, durable: true)
+    Tackle.Exchange.create(channel, exchange)
 
-    AMQP.Basic.publish(channel, exchange, routing_key, message, persistent: true)
+    Tackle.Exchange.publish(channel, exchange, message, routing_key)
 
     AMQP.Connection.close(connection)
   end

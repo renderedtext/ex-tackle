@@ -8,7 +8,6 @@ defmodule Tackle.ConnectionTest do
     :timer.sleep(100)
   end
 
-
   test "default connection name returns new process for each call" do
     pid = get_connection_pid(:default)
     assert get_connection_pid(:default) != pid
