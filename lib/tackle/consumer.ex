@@ -30,6 +30,8 @@ defmodule Tackle.Consumer do
         GenServer.start_link(__MODULE__, {}, name: __MODULE__)
       end
 
+      def start_link(_args), do: start_link()
+
       def init({}) do
         url = unquote(url)
         service = unquote(service)
