@@ -78,6 +78,10 @@ defmodule Tackle.Consumer do
         {:ok, state}
       end
 
+      def terminate(reason, state) do
+        state.channel |> Tackle.Channel.close()
+      end
+
       def handle_info({:basic_consume_ok, _}, state), do: {:noreply, state}
       def handle_info({:basic_cancel, _}, state), do: {:stop, :normal, state}
       def handle_info({:basic_cancel_ok, _}, state), do: {:noreply, state}
