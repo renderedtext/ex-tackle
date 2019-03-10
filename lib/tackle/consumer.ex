@@ -12,6 +12,9 @@ defmodule Tackle.Consumer do
       require Logger
 
       def start_link, do: start_link([])
+      def start_link(overrides) do
+        GenServer.start_link(__MODULE__, overrides, name: __MODULE__)
+      end
 
       def init(overrides) do
         default_options = unquote(options)
