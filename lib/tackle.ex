@@ -5,7 +5,6 @@ defmodule Tackle do
 
   @impl Application
   def start(_type, _args) do
-
     children = [
       Tackle.Connection
     ]

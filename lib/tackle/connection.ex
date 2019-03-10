@@ -11,7 +11,8 @@ defmodule Tackle.Connection do
   (to preserve current behaviour).
   """
 
-  def start_link(opts \\ []) do
+  def start_link, do: start_link([])
+  def start_link(opts) do
     {cache, opts} = Keyword.pop(opts, :initial_value, %{})
     opts = Keyword.merge([name: __MODULE__], opts)
 
