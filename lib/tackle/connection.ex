@@ -1,17 +1,21 @@
 defmodule Tackle.Connection do
+  use Agent
   require Logger
 
   @moduledoc """
   Holds established connections.
   Each connection is identifed by name.
 
-  Connection name ':default' is speciall: it is NOT persisted ->
+  Connection name ':default' is special: it is NOT persisted ->
   each open() call with  :default connection name opens new connection
   (to preserve current behaviour).
   """
 
-  def start_link do
-    Agent.start_link(fn -> %{} end, name: __MODULE__)
+  def start_link(opts \\ []) do
+    {cache, opts} = Keyword.pop(opts, :initial_value, %{})
+    opts = Keyword.merge([name: __MODULE__], opts)
+
+    Agent.start_link(fn -> cache end, opts)
   end
 
   @doc """
@@ -21,7 +25,21 @@ defmodule Tackle.Connection do
       open(:foo, [])
   """
   def open(name, url) do
-    open_(name, url)
+    do_open(name, url)
+  end
+
+  def close(conn) do
+    AMQP.Connection.close(conn)
+  end
+
+  def reset do
+    get_all()
+    |> Enum.each(fn {_name, conn} ->
+      Tackle.Connection.close(conn)
+      Agent.update(__MODULE__, fn _state -> %{} end)
+    end)
+
+    :ok
   end
 
   @doc """
@@ -31,13 +49,13 @@ defmodule Tackle.Connection do
     Agent.get(__MODULE__, fn state -> state |> Map.to_list() end)
   end
 
-  defp open_(name = :default, url) do
+  defp do_open(name = :default, url) do
     connection = open(url)
     Logger.info("Opening new connection #{inspect(connection)} for id: #{name}")
     connection
   end
 
-  defp open_(name, url) do
+  defp do_open(name, url) do
     Agent.get(__MODULE__, fn state -> Map.get(state, name) end)
     |> case do
       nil ->
@@ -66,7 +84,7 @@ defmodule Tackle.Connection do
   end
 
   defp validate(connection, name) do
-    connection |> Map.get(:pid) |> validate_connection_process(connection, name)
+    connection.pid |> validate_connection_process(connection, name)
   end
 
   def reopen_on_validation_failure(state = {:error, _}, name, url) do
