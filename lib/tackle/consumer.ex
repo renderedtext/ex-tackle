@@ -3,75 +3,77 @@ defmodule Tackle.Consumer do
     @callback handle_message(String.t()) :: any
   end
 
-  # Sequential message handling by default
-  @prefetch_count 1
-
   defmacro __using__(options) do
-    url = options[:url]
-
-    exchange = options[:exchange]
-    routing_key = options[:routing_key]
-    service = options[:service]
-
-    retry_delay = options[:retry_delay] || 10
-    retry_limit = options[:retry_limit] || 10
-
-    prefetch_count = options[:prefetch_count] || @prefetch_count
-
-    connection_id = options[:connection_id] || :default
-
     quote do
+      # let genserver 1 sec for cleanup work
+      use GenServer, shutdown: 1_000
       @behaviour Tackle.Consumer.Behaviour
 
       require Logger
-      use GenServer
 
-      def start_link do
-        GenServer.start_link(__MODULE__, {}, name: __MODULE__)
+      def start_link(overrides \\ []) do
+        GenServer.start_link(__MODULE__, overrides, name: __MODULE__)
       end
 
-      def init({}) do
-        url = unquote(url)
-        service = unquote(service)
-        routing_key = unquote(routing_key)
-        retry_delay = unquote(retry_delay)
-        retry_limit = unquote(retry_limit)
-        prefetch_count = unquote(prefetch_count)
-        connection_id = unquote(connection_id)
+      def init(overrides) do
+        default_options = unquote(options)
+        options = Keyword.merge(default_options, overrides)
 
-        {:ok, connection} = Tackle.Connection.open(connection_id, url)
+        # so, we can cleanup with terminate callback
+        Process.flag(:trap_exit, true)
+
+        url = options[:url]
+        connection_id = options[:connection_id] || :default
+        # sequential message handling by default
+        prefetch_count = options[:prefetch_count] || 1
+
+        service = options[:service]
+        remote_exchange_name = options[:exchange]
+        routing_key = options[:routing_key]
+
+        retry_delay = options[:retry_delay] || 10
+        retry_limit = options[:retry_limit] || 10
+
+        channel = {:ok, connection} = Tackle.Connection.open(connection_id, url)
         channel = Tackle.Channel.create(connection, prefetch_count)
 
-        remote_exchange = unquote(exchange)
-        service_exchange = Tackle.Exchange.create_service_exchange(channel, service, routing_key)
+        service_exchange_name =
+          Tackle.Exchange.create_service_exchange(channel, service, routing_key)
 
         Tackle.Exchange.bind_to_remote(
           channel,
-          service_exchange,
-          remote_exchange,
+          service_exchange_name,
+          remote_exchange_name,
           routing_key
         )
 
-        queue = Tackle.Queue.create_queue(channel, service_exchange)
-        dead_queue = Tackle.Queue.create_dead_queue(channel, service_exchange)
-
-        delay_queue =
-          Tackle.Queue.create_delay_queue(channel, service_exchange, routing_key, retry_delay)
+        consume_from_queue = Tackle.Queue.create_queue(channel, service_exchange_name)
 
         Tackle.Exchange.bind_to_queue(
           channel,
-          service_exchange,
-          queue,
+          service_exchange_name,
+          consume_from_queue,
           routing_key
         )
 
-        {:ok, _consumer_tag} = AMQP.Basic.consume(channel, queue)
+        delay_queue_name =
+          Tackle.Queue.create_delay_queue(
+            channel,
+            service_exchange_name,
+            routing_key,
+            retry_delay
+          )
+
+        dead_queue_name = Tackle.Queue.create_dead_queue(channel, service_exchange_name)
+
+        # start actual consuming
+        {:ok, _consumer_tag} = AMQP.Basic.consume(channel, consume_from_queue)
 
         state = %{
           url: url,
           channel: channel,
-          delay_queue: delay_queue,
-          dead_queue: dead_queue,
+          delay_queue: delay_queue_name,
+          dead_queue: dead_queue_name,
           retry_limit: retry_limit
         }
 
@@ -80,11 +82,12 @@ defmodule Tackle.Consumer do
 
       def terminate(reason, state) do
         state.channel |> Tackle.Channel.close()
+        # state.channel.conn |> Tackle.Connection.close()
       end
 
       def handle_info({:basic_consume_ok, _}, state), do: {:noreply, state}
       def handle_info({:basic_cancel, _}, state), do: {:stop, :normal, state}
-      def handle_info({:basic_cancel_ok, _}, state), do: {:noreply, state}
+      def handle_info({:basic_cancel_ok, _}, state), do: {:stop, :normal, state}
 
       def handle_info({:basic_deliver, payload, %{delivery_tag: tag} = message_metadata}, state) do
         consume_callback = fn ->
