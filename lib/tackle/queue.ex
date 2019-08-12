@@ -2,8 +2,8 @@ defmodule Tackle.Queue do
   use AMQP
   require Logger
 
-  # one week in milliseconds
-  @dead_letter_timeout 604_800_000
+  # one year in milliseconds
+  @dead_letter_timeout 604_800_000 * 52
 
   def create_queue(channel, service_exchange) do
     queue_name = service_exchange
