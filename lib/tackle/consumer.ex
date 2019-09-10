@@ -12,6 +12,7 @@ defmodule Tackle.Consumer do
       require Logger
 
       def start_link, do: start_link([])
+
       def start_link(overrides) do
         GenServer.start_link(__MODULE__, overrides, name: __MODULE__)
       end
@@ -110,12 +111,49 @@ defmodule Tackle.Consumer do
       def delivery_handler(consume_callback, error_callback) do
         Process.flag(:trap_exit, true)
 
-        pid = spawn_link(consume_callback)
+        me = self()
+        safe_consumer = fn -> safe_consumer(me, consume_callback) end
+
+        pid = spawn_link(safe_consumer)
 
         receive do
-          {:EXIT, pid, :normal} -> :ok
-          {:EXIT, pid, reason} -> error_callback.(reason)
+          :ok ->
+            :ok
+
+          {:retry, reason} ->
+            error_callback.(reason)
+
+          {:EXIT, ^pid, :normal} ->
+            :ok
+
+          {:EXIT, ^pid, :shutdown} ->
+            :ok
+
+          {:EXIT, ^pid, {:shutdown, _reason}} ->
+            :ok
+
+          {:EXIT, ^pid, reason} ->
+            error_callback.(reason)
         end
+      end
+
+      defp safe_consumer(receiver, consume_callback) do
+        # try not to die, so we do not get all the notifications
+        result =
+          try do
+            consume_callback.()
+            :ok
+          catch
+            # retry on exit and throw(:retry) or throw({:retry, reason})
+            :throw, :retry ->
+              {:retry, {:retry_requested, __STACKTRACE__}}
+
+            :throw, {:retry, reason} ->
+              {:retry, {reason, __STACKTRACE__}}
+          end
+
+        # send result back to the receiver, so we can retry if needed
+        send(receiver, result)
       end
 
       defp retry(
@@ -125,6 +163,7 @@ defmodule Tackle.Consumer do
              error_reason
            ) do
         retry_count = Tackle.DelayedRetry.retry_count_from_headers(headers)
+        # IO.inspect("Retry #{retry_count + 1}: #{inspect(error_reason)}")
 
         options = [
           persistent: true,
