@@ -55,5 +55,22 @@ defmodule Tackle.DeliveryHandlerTest do
                  reason
                end)
     end
+
+    it "can enforce retry with an throw(:retry)" do
+      assert :retry_requested ==
+               TestConsumer.delivery_handler(fn -> throw(:retry) end, fn {reason, _stacktrace} ->
+                 reason
+               end)
+    end
+
+    it "can enforce retry with an throw(:retry, reason)" do
+      assert {:error, :error_reason} ==
+               TestConsumer.delivery_handler(
+                 fn -> throw({:retry, {:error, :error_reason}}) end,
+                 fn {reason, _stacktrace} ->
+                   reason
+                 end
+               )
+    end
   end
 end

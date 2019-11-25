@@ -19,4 +19,8 @@ defmodule Tackle.Channel do
 
     channel
   end
+
+  def close(channel) do
+    Channel.close(channel)
+  end
 end

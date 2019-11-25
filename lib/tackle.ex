@@ -3,11 +3,10 @@ defmodule Tackle do
 
   require Logger
 
+  @impl Application
   def start(_type, _args) do
-    import Supervisor.Spec, warn: false
-
     children = [
-      worker(Tackle.Connection, [])
+      Tackle.Connection
     ]
 
     opts = [strategy: :one_for_one, name: Tackle.Supervisor]
@@ -28,6 +27,7 @@ defmodule Tackle do
 
     AMQP.Basic.publish(channel, exchange, routing_key, message, persistent: true)
 
+    AMQP.Channel.close(channel)
     AMQP.Connection.close(connection)
   end
 

@@ -45,10 +45,10 @@ defmodule Tackle.ParallelMessageHandling_2_Test do
   describe "parallel message handling" do
     it "handles messages in pairs", context do
       sup = context[:sup]
-      Tackle.publish(sup |> inspect, @publish_options)
-      Tackle.publish(sup |> inspect, @publish_options)
-      Tackle.publish(sup |> inspect, @publish_options)
-      Tackle.publish(sup |> inspect, @publish_options)
+      Tackle.publish(sup |> inspect(), @publish_options)
+      Tackle.publish(sup |> inspect(), @publish_options)
+      Tackle.publish(sup |> inspect(), @publish_options)
+      Tackle.publish(sup |> inspect(), @publish_options)
 
       :timer.sleep(1000)
 

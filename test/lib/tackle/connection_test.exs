@@ -2,10 +2,8 @@ defmodule Tackle.ConnectionTest do
   use ExUnit.Case
   doctest Tackle.Connection, import: true
 
-  setup_all do
-    # Forget all opened connections
-    Process.whereis(Tackle.Connection) |> Process.exit(:kill)
-    :timer.sleep(100)
+  setup do
+    Tackle.Connection.reset()
   end
 
   test "default connection name returns new process for each call" do
@@ -29,6 +27,6 @@ defmodule Tackle.ConnectionTest do
   end
 
   def get_pid({:ok, connection}) do
-    connection |> Map.get(:pid)
+    connection.pid
   end
 end
