@@ -92,7 +92,7 @@ defmodule Tackle.Consumer do
           AMQP.Basic.nack(state.channel, tag, [multiple: false, requeue: false])
         end
 
-        spawn(fn-> delivery_handler(consume_callback, error_callback) end)
+        spawn_link(fn-> delivery_handler(consume_callback, error_callback) end)
 
         {:noreply, state}
       end
