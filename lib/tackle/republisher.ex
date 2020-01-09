@@ -24,10 +24,13 @@ defmodule Tackle.Republisher do
         IO.puts "no more messages"
 
       {:ok, message, %{delivery_tag: tag}} ->
-        AMQP.Basic.publish(channel, exchange, routing_key, message, persistent: true)
-        AMQP.Basic.ack(channel, tag)
+        :ok = AMQP.Basic.publish(channel, exchange, routing_key, message,
+                                 persistent: true)
+        :ok = AMQP.Basic.ack(channel, tag)
 
         IO.puts "republished"
+        
+      error -> error
     end
   end
 

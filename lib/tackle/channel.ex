@@ -9,7 +9,7 @@ defmodule Tackle.Channel do
   def create(connection, prefetch_count) do
     {:ok, channel} = Channel.open(connection)
 
-    Basic.qos(channel, prefetch_count: prefetch_count)
+    :ok = Basic.qos(channel, prefetch_count: prefetch_count)
 
     channel
   end

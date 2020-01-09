@@ -85,13 +85,13 @@ defmodule Tackle.Consumer do
       def handle_info({:basic_deliver, payload, %{delivery_tag: tag, headers: headers}}, state) do
         consume_callback = fn ->
           handle_message(payload)
-          AMQP.Basic.ack(state.channel, tag)
+          :ok = AMQP.Basic.ack(state.channel, tag)
         end
 
         error_callback = fn reason ->
           Logger.error "Consumption failed: #{inspect reason}; payload: #{inspect payload}"
           retry(state, payload, headers)
-          AMQP.Basic.nack(state.channel, tag, [multiple: false, requeue: false])
+          :ok = AMQP.Basic.nack(state.channel, tag, [multiple: false, requeue: false])
         end
 
         spawn(fn-> delivery_handler(consume_callback, error_callback) end)
