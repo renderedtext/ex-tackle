@@ -26,11 +26,12 @@ defmodule Tackle.DeadQueueTest do
   @dead_queue "dead-service.test-messages.dead"
 
   setup do
+    Support.purge_queue("dead-service.test-messages")
+    Support.purge_queue(@dead_queue, true)
+
     {:ok, _} = DeadConsumer.start_link
 
-    :timer.sleep(1000)
-
-    Support.purge_queue(@dead_queue)
+    :ok
   end
 
   describe "broken consumer" do

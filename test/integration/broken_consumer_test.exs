@@ -27,6 +27,8 @@ defmodule Tackle.BrokenConsumerTest do
   }
 
   setup do
+    Support.purge_queue("broken-service.test-messages")
+
     MessageTrace.clear("broken-service")
 
     {:ok, _} = BrokenConsumer.start_link

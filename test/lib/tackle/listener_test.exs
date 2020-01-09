@@ -25,7 +25,15 @@ defmodule Tackle.ListenerTest do
 
       :timer.sleep(1000)
 
-      {response, 0} = System.cmd "sudo", ["rabbitmqctl", "list_queues"]
+      {response, 0} =
+        case System.get_env("DOCKER_RABBITMQ") do
+          "true" ->
+            System.cmd "docker", ["exec", "rabbitmq", "rabbitmqctl", "list_queues"]
+
+          _ ->
+            System.cmd "sudo", ["rabbitmqctl", "list_queues"]
+        end
+
 
       assert String.contains?(response, "test-service.test-messages")
       assert String.contains?(response, "test-service.test-messages.delay.10")
@@ -37,7 +45,14 @@ defmodule Tackle.ListenerTest do
 
       :timer.sleep(1000)
 
-      {response, 0} = System.cmd "sudo", ["rabbitmqctl", "list_exchanges"]
+      {response, 0} =
+        case System.get_env("DOCKER_RABBITMQ") do
+          "true" ->
+            System.cmd "docker", ["exec", "rabbitmq", "rabbitmqctl", "list_queues"]
+
+          _ ->
+            System.cmd "sudo", ["rabbitmqctl", "list_queues"]
+        end
 
       assert String.contains?(response, "test-service.test-messages")
     end
