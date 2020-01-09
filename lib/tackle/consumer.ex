@@ -40,6 +40,8 @@ defmodule Tackle.Consumer do
         connection_id  = unquote(connection_id)
 
         {:ok, connection} = Tackle.Connection.open(connection_id, url)
+        # Get notifications when the connection goes down
+        Process.monitor(connection.pid)
         channel = Tackle.Channel.create(connection, prefetch_count)
 
         remote_exchange  = unquote(exchange)
@@ -106,6 +108,11 @@ defmodule Tackle.Consumer do
           {:EXIT, pid, :normal} -> :ok
           {:EXIT, pid, reason} -> error_callback.(reason)
         end
+      end
+
+      def handle_info({:DOWN, _, :process, _pid, reason}, _) do
+        # Stop GenServer. Will be restarted by Supervisor.
+        {:stop, {:connection_lost, reason}, nil}
       end
 
       defp retry(state, payload, headers) do
