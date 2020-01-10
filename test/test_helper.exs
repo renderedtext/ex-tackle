@@ -19,9 +19,18 @@ defmodule Support do
     status
   end
 
-  def purge_queue(queue_name) do
+  def purge_queue(queue_name, set_ttl \\ false) do
     {:ok, connection} = AMQP.Connection.open("amqp://localhost")
     {:ok, channel} = AMQP.Channel.open(connection)
+
+    if set_ttl do
+      AMQP.Queue.declare(channel, queue_name, durable: true,
+      arguments: [
+        {"x-message-ttl", :long, 604800000}
+      ])
+    else
+      AMQP.Queue.declare(channel, queue_name, durable: true)
+    end
 
     AMQP.Queue.purge(channel, queue_name)
 
@@ -48,4 +57,3 @@ defmodule Support do
 end
 
 ExUnit.start([trace: true])
-

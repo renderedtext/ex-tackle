@@ -1,0 +1,17 @@
+version: v1.0
+name: Ex-tackle tests
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+
+blocks:
+  - name: "Tests"
+    task:
+      jobs:
+      - name: Testing
+        commands:
+          - checkout
+          - make rabbitmq.run
+          - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
+          - make docker.test

@@ -40,6 +40,8 @@ defmodule Tackle.Consumer do
         connection_id  = unquote(connection_id)
 
         {:ok, connection} = Tackle.Connection.open(connection_id, url)
+        # Get notifications when the connection goes down
+        Process.monitor(connection.pid)
         channel = Tackle.Channel.create(connection, prefetch_count)
 
         remote_exchange  = unquote(exchange)
@@ -83,13 +85,13 @@ defmodule Tackle.Consumer do
       def handle_info({:basic_deliver, payload, %{delivery_tag: tag, headers: headers}}, state) do
         consume_callback = fn ->
           handle_message(payload)
-          AMQP.Basic.ack(state.channel, tag)
+          :ok = AMQP.Basic.ack(state.channel, tag)
         end
 
         error_callback = fn reason ->
           Logger.error "Consumption failed: #{inspect reason}; payload: #{inspect payload}"
           retry(state, payload, headers)
-          AMQP.Basic.nack(state.channel, tag, [multiple: false, requeue: false])
+          :ok = AMQP.Basic.nack(state.channel, tag, [multiple: false, requeue: false])
         end
 
         spawn(fn-> delivery_handler(consume_callback, error_callback) end)
@@ -106,6 +108,11 @@ defmodule Tackle.Consumer do
           {:EXIT, pid, :normal} -> :ok
           {:EXIT, pid, reason} -> error_callback.(reason)
         end
+      end
+
+      def handle_info({:DOWN, _, :process, _pid, reason}, _) do
+        # Stop GenServer. Will be restarted by Supervisor.
+        {:stop, {:connection_lost, reason}, nil}
       end
 
       defp retry(state, payload, headers) do

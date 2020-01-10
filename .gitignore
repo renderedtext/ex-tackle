@@ -3,3 +3,6 @@
 /deps
 erl_crash.dump
 *.ez
+
+/home_dir
+/log

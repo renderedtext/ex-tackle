@@ -42,6 +42,8 @@ defmodule Tackle.RepublishTest do
 
   setup do
     Support.create_exchange("test-exchange")
+
+    Support.purge_queue("republish-service.test-messages")
   end
 
   describe "republishing" do
@@ -53,7 +55,7 @@ defmodule Tackle.RepublishTest do
       {:ok, broken_consumer} = BrokenConsumer.start_link
       :timer.sleep(1000)
 
-      Support.purge_queue(@dead_queue)
+      Support.purge_queue(@dead_queue, true)
       assert Support.queue_status(@dead_queue).message_count == 0
 
       Tackle.publish("Hi ", @publish_options)

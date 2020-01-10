@@ -9,7 +9,7 @@ defmodule Tackle.Queue do
 
     Logger.info "Creating queue '#{queue_name}'"
 
-    Queue.declare(channel, queue_name, durable: true)
+    {:ok, queue} = Queue.declare(channel, queue_name, durable: true)
 
     queue_name
   end
@@ -19,14 +19,15 @@ defmodule Tackle.Queue do
 
     Logger.info "Creating delay queue '#{queue_name}'"
 
-    Queue.declare(channel, queue_name, [
-      durable: true,
-      arguments: [
-        {"x-dead-letter-exchange", :longstr, service_exchange},
-        {"x-dead-letter-routing-key", :longstr, routing_key},
-        {"x-message-ttl", :long, delay * 1000}
-      ]
-    ])
+    {:ok, queue} =
+      Queue.declare(channel, queue_name, [
+        durable: true,
+        arguments: [
+          {"x-dead-letter-exchange", :longstr, service_exchange},
+          {"x-dead-letter-routing-key", :longstr, routing_key},
+          {"x-message-ttl", :long, delay * 1000}
+        ]
+      ])
 
     queue_name
   end
@@ -36,12 +37,13 @@ defmodule Tackle.Queue do
 
     Logger.info "Creating dead queue '#{queue_name}'"
 
-    Queue.declare(channel, queue_name, [
-      durable: true,
-      arguments: [
-        {"x-message-ttl", :long, @dead_letter_timeout}
-      ]
-    ])
+    {:ok, queue} =
+      Queue.declare(channel, queue_name, [
+        durable: true,
+        arguments: [
+          {"x-message-ttl", :long, @dead_letter_timeout}
+        ]
+      ])
 
     queue_name
   end
