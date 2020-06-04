@@ -143,7 +143,6 @@ defmodule Tackle.Consumer do
             options)
         end
       end
-
     end
   end
 end
