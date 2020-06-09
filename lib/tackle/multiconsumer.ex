@@ -40,7 +40,7 @@ defmodule Tackle.Multiconsumer do
           defmodule unquote(module_name) do
             use Tackle.Consumer,
               url: unquote(opts[:url]),
-              service: unquote(opts[:service]),
+              service: unquote("#{opts[:service]}.#{exchange}"),
               exchange: unquote(exchange),
               routing_key: unquote(routing_key)
 
