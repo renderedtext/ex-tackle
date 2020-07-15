@@ -30,6 +30,6 @@ defmodule Tackle.MulticonsumerTest do
   test "successfully starts multiconsumers" do
     import Supervisor.Spec
     opts = [strategy: :one_for_one, name: Front.Supervisor]
-    Supervisor.start_link([worker(MulticonsumerExample, [])], opts)
+    Supervisor.start_link([worker(MulticonsumerExample, []), worker(MulticonsumerExampleBeta, [])], opts)
   end
 end
