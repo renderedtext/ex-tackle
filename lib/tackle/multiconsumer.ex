@@ -34,7 +34,7 @@ defmodule Tackle.Multiconsumer do
       Enum.map(opts[:routes], fn route ->
         {_, _, [exchange, routing_key, _]} = route
 
-        module_name = Tackle.Multiconsumer.consumer_module_name(exchange, routing_key)
+        module_name = Tackle.Multiconsumer.consumer_module_name(opts[:service], exchange, routing_key)
 
         quote do
           defmodule unquote(module_name) do
@@ -84,7 +84,7 @@ defmodule Tackle.Multiconsumer do
     consumers ++ [supervisor]
   end
 
-  def consumer_module_name(exchange, routing_key) do
-    :"#{exchange}.#{routing_key}"
+  def consumer_module_name(service, exchange, routing_key) do
+    :"#{service}.#{exchange}.#{routing_key}"
   end
 end
