@@ -14,4 +14,4 @@ blocks:
           - checkout
           - make rabbitmq.run
           - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
-          - make docker.test
+          - make test

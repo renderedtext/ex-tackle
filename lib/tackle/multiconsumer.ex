@@ -26,6 +26,7 @@ defmodule Tackle.Multiconsumer do
 
   defmacro __using__(opts) do
     caller_module = __CALLER__.module
+    service = opts[:service]
 
     #
     # Create a consumer module for all routes
@@ -34,7 +35,7 @@ defmodule Tackle.Multiconsumer do
       Enum.map(opts[:routes], fn route ->
         {_, _, [exchange, routing_key, _]} = route
 
-        module_name = Tackle.Multiconsumer.consumer_module_name(opts[:service], exchange, routing_key)
+        module_name = Tackle.Multiconsumer.consumer_module_name(service, exchange, routing_key)
 
         quote do
           defmodule unquote(module_name) do
@@ -64,10 +65,12 @@ defmodule Tackle.Multiconsumer do
         def start_link do
           import Supervisor.Spec
 
+          service = unquote(opts[:service])
+
           children =
             unquote(opts[:routes])
             |> Enum.map(fn {exchange, routing_key, _} ->
-              Tackle.Multiconsumer.consumer_module_name(exchange, routing_key)
+              Tackle.Multiconsumer.consumer_module_name(service, exchange, routing_key)
             end)
             |> Enum.map(fn consumer -> worker(consumer, []) end)
 

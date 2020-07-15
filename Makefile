@@ -30,7 +30,7 @@ CMD?=/bin/bash
 
 # For development without docker
 
-test:
+local.test:
 	mix test --trace
 
 rabbit.reset:
@@ -43,8 +43,8 @@ rabbit.reset:
 console:
 	docker run --network=host $(INTERACTIVE_SESSION) $(CMD)
 
-docker.test:
-	$(MAKE) console DOCKER_RABBITMQ=true MIX_ENV=test CMD="mix test --trace"
+test:
+	$(MAKE) console DOCKER_RABBITMQ=true MIX_ENV=test CMD="mix test --trace $(FILE)"
 
 rabbitmq.run:
 	docker run -d --rm --name rabbitmq --network=host --memory 512m rabbitmq:3.7
