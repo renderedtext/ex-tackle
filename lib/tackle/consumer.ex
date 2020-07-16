@@ -32,7 +32,13 @@ defmodule Tackle.Consumer do
 
       def init({}) do
         url = unquote(url)
-        service = unquote(service)
+        service_name_prefix = Application.get_env(:tackle, :service_name_prefix)
+        service =
+          if service_name_prefix do
+            "#{service_name_prefix}.#{unquote(service)}"
+          else
+            unquote(service)
+          end
         routing_key = unquote(routing_key)
         retry_delay = unquote(retry_delay)
         retry_limit = unquote(retry_limit)

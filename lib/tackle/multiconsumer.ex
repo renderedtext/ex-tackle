@@ -40,7 +40,7 @@ defmodule Tackle.Multiconsumer do
           defmodule unquote(module_name) do
             use Tackle.Consumer,
               url: unquote(opts[:url]),
-              service: unquote("#{opts[:service]}.#{exchange}"),
+              service: "#{unquote(opts[:service])}.#{unquote(exchange)}",
               exchange: unquote(exchange),
               routing_key: unquote(routing_key)
 
@@ -63,8 +63,6 @@ defmodule Tackle.Multiconsumer do
 
         def start_link do
           import Supervisor.Spec
-
-          service = unquote(opts[:service])
 
           children =
             unquote(opts[:routes])
