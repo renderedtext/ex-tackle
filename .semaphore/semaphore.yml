@@ -16,6 +16,8 @@ blocks:
           commands:
             - checkout
             - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
+            - make console USER=root MIX_ENV=test CMD="mix deps.unlock --check-unused"
+            - make console USER=root MIX_ENV=test CMD="mix format --check-formatted"
             - make format.check
         - name: Testing
           matrix:
