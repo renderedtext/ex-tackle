@@ -13,9 +13,8 @@ defmodule Tackle.RepublishTest do
       retry_delay: 1,
       retry_limit: 1
 
-    def handle_message(message) do
-      # exception
-      :a + 1
+    def handle_message(_) do
+      raise ArithmeticError
     end
   end
 

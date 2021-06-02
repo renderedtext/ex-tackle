@@ -29,7 +29,7 @@ defmodule Tackle.SharedConnection.Test do
 
   def message_handler(message, response) do
     "#PID" <> pid = message
-    client = pid |> String.to_char_list() |> :erlang.list_to_pid()
+    client = pid |> String.to_charlist() |> :erlang.list_to_pid()
     send(client, response)
   end
 
@@ -52,14 +52,14 @@ defmodule Tackle.SharedConnection.Test do
   end
 
   describe "shared connection" do
-    it "- reopen consumers", context do
+    it "- reopen consumers", _context do
       {:ok, c1} = TestConsumer1.start_link()
       {:ok, c2} = TestConsumer2.start_link()
 
       # only one connection opend
       assert Tackle.Connection.get_all() |> Enum.count() == 1
 
-      verify_consumer_functionality
+      verify_consumer_functionality()
 
       # kill consumers
       Process.unlink(c1)
@@ -69,7 +69,7 @@ defmodule Tackle.SharedConnection.Test do
 
       # kill connection process
       assert Tackle.Connection.get_all() |> Enum.count() == 1
-      old_pid = get_all_connections
+      old_pid = get_all_connections()
       old_pid |> Process.exit(:kill)
 
       # restart consumers
@@ -78,15 +78,15 @@ defmodule Tackle.SharedConnection.Test do
 
       # new connection process?
       assert Tackle.Connection.get_all() |> Enum.count() == 1
-      new_pid = get_all_connections
+      new_pid = get_all_connections()
       assert old_pid != new_pid
 
-      verify_consumer_functionality
+      verify_consumer_functionality()
     end
 
     def verify_consumer_functionality do
-      Tackle.publish(self |> inspect, @publish_options_1)
-      Tackle.publish(self |> inspect, @publish_options_2)
+      Tackle.publish(self() |> inspect, @publish_options_1)
+      Tackle.publish(self() |> inspect, @publish_options_2)
 
       response = rcv() <> rcv()
       assert String.contains?(response, "consumer_1")

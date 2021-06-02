@@ -9,7 +9,7 @@ defmodule Tackle.MulticonsumerTest do
         {"exchange-1", "key1", :handler}
       ]
 
-    def handler(message) do
+    def handler(_message) do
       IO.puts("Handled!")
     end
   end
@@ -22,7 +22,7 @@ defmodule Tackle.MulticonsumerTest do
         {"exchange-1", "key1", :handler}
       ]
 
-    def handler(message) do
+    def handler(_message) do
       IO.puts("Handled!")
     end
   end

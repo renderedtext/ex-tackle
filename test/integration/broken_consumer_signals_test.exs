@@ -16,7 +16,7 @@ defmodule Tackle.BrokenConsumerSignalsTest do
     def handle_message(message) do
       message |> MessageTrace.save("broken-service-signal")
 
-      Process.exit(self, {:foo, message})
+      Process.exit(self(), {:foo, message})
     end
   end
 
