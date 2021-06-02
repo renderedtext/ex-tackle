@@ -4,8 +4,14 @@ defmodule Tackle.Channel do
 
   @prefetch_count 1
 
-  def create(connection) do create(connection, @prefetch_count) end
-  def create(connection, nil) do create(connection, @prefetch_count) end
+  def create(connection) do
+    create(connection, @prefetch_count)
+  end
+
+  def create(connection, nil) do
+    create(connection, @prefetch_count)
+  end
+
   def create(connection, prefetch_count) do
     {:ok, channel} = Channel.open(connection)
 
@@ -13,5 +19,4 @@ defmodule Tackle.Channel do
 
     channel
   end
-
 end

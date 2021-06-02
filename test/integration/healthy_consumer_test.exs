@@ -19,13 +19,13 @@ defmodule Tackle.HealthyConsumerTest do
   @publish_options %{
     url: "amqp://localhost",
     exchange: "test-exchange",
-    routing_key: "health",
+    routing_key: "health"
   }
 
   setup do
     MessageTrace.clear("healthy-service")
 
-    {:ok, _} = TestConsumer.start_link
+    {:ok, _} = TestConsumer.start_link()
 
     :timer.sleep(1000)
   end

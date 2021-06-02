@@ -21,7 +21,6 @@ defmodule Tackle.ConnectionErrorsTest do
       |> Map.get(:pid)
       |> Process.exit(:kill)
 
-
       :timer.sleep(1000)
 
       :ok
@@ -46,10 +45,10 @@ defmodule Tackle.ConnectionErrorsTest do
       |> Map.get(:pid)
       |> Process.exit(:kill)
 
-
       :timer.sleep(1000)
 
-      :a + 1 # exception
+      # exception
+      :a + 1
     end
   end
 
@@ -70,17 +69,17 @@ defmodule Tackle.ConnectionErrorsTest do
       |> Map.get(:pid)
       |> Process.exit(:kill)
 
-
       :timer.sleep(1000)
 
-      :a + 1 # exception
+      # exception
+      :a + 1
     end
   end
 
   @publish_options %{
     url: "amqp://localhost",
     exchange: "test-exchange",
-    routing_key: "test-messages",
+    routing_key: "test-messages"
   }
 
   setup do

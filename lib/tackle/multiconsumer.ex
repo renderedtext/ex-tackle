@@ -1,4 +1,3 @@
-
 defmodule Tackle.Multiconsumer do
   @doc """
   A generalization of a Tackle.Consumer. Where a Tackle.Consumer can consume
@@ -34,7 +33,8 @@ defmodule Tackle.Multiconsumer do
       Enum.map(opts[:routes], fn route ->
         {_, _, [exchange, routing_key, _]} = route
 
-        module_name = Tackle.Multiconsumer.consumer_module_name(caller_module, exchange, routing_key)
+        module_name =
+          Tackle.Multiconsumer.consumer_module_name(caller_module, exchange, routing_key)
 
         quote do
           defmodule unquote(module_name) do
@@ -67,7 +67,11 @@ defmodule Tackle.Multiconsumer do
           children =
             unquote(opts[:routes])
             |> Enum.map(fn {exchange, routing_key, _} ->
-              Tackle.Multiconsumer.consumer_module_name(unquote(caller_module), exchange, routing_key)
+              Tackle.Multiconsumer.consumer_module_name(
+                unquote(caller_module),
+                exchange,
+                routing_key
+              )
             end)
             |> Enum.map(fn consumer -> worker(consumer, []) end)
 

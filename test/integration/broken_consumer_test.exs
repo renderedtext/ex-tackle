@@ -16,14 +16,15 @@ defmodule Tackle.BrokenConsumerTest do
     def handle_message(message) do
       message |> MessageTrace.save("broken-service")
 
-      :a + 1 # exception
+      # exception
+      :a + 1
     end
   end
 
   @publish_options %{
     url: "amqp://localhost",
     exchange: "test-exchange",
-    routing_key: "test-messages",
+    routing_key: "test-messages"
   }
 
   setup do
@@ -31,7 +32,7 @@ defmodule Tackle.BrokenConsumerTest do
 
     MessageTrace.clear("broken-service")
 
-    {:ok, _} = BrokenConsumer.start_link
+    {:ok, _} = BrokenConsumer.start_link()
 
     :timer.sleep(1000)
   end

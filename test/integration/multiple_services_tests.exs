@@ -14,7 +14,7 @@ defmodule Tackle.MultipleServicesTest do
       retry_limit: 3
 
     def handle_message(message) do
-      IO.puts "ServiceA: received '#{message}'"
+      IO.puts("ServiceA: received '#{message}'")
 
       message |> MessageTrace.save("serviceA")
     end
@@ -31,7 +31,7 @@ defmodule Tackle.MultipleServicesTest do
       retry_limit: 3
 
     def handle_message(message) do
-      IO.puts "ServiceB: received '#{message}'"
+      IO.puts("ServiceB: received '#{message}'")
 
       message |> MessageTrace.save("serviceB")
 
@@ -46,8 +46,8 @@ defmodule Tackle.MultipleServicesTest do
   }
 
   setup do
-    {:ok, serviceA} = ServiceA.start_link
-    {:ok, serviceB} = ServiceB.start_link
+    {:ok, serviceA} = ServiceA.start_link()
+    {:ok, serviceB} = ServiceB.start_link()
 
     MessageTrace.clear("serviceA")
     MessageTrace.clear("serviceB")
