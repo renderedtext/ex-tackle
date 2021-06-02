@@ -45,16 +45,11 @@ rabbit.reset:
 console:
 	docker run --network=host $(INTERACTIVE_SESSION) $(CMD)
 
-test:
-	{ \
-		string="1.10 \
-	$ELIXIR_VERSION"; \
-	if [ "$string" == "$(sort --version-sort <<< "$string")" ]; then \
+test_1_10:
 	$(MAKE) console DOCKER_RABBITMQ=true DOCKER_RABBITMQ_CONTAINER_NAME=$(DOCKER_RABBITMQ_CONTAINER_NAME) MIX_ENV=test CMD="mix do compile --warnings-as-errors, test --trace $(FILE)"; \
-	else \
+
+test_1_11:
 	$(MAKE) console DOCKER_RABBITMQ=true DOCKER_RABBITMQ_CONTAINER_NAME=$(DOCKER_RABBITMQ_CONTAINER_NAME) MIX_ENV=test CMD="mix do compile --warnings-as-errors, test --warnings-as-errors --trace $(FILE)"; \
-	fi; \
-	}
 
 format.check:
 	$(MAKE) console CMD="mix format --check-formatted"
