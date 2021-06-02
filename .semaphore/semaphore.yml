@@ -23,7 +23,7 @@ blocks:
               values: ["1.6", "1.7", "1.8", "1.9", "1.10", "1.11", "1.12"]
           commands:
             - checkout
-            - make console USER=root CMD="apt-get update; apt install docker.io -y install"
+            - make docker.build
             - make rabbitmq.run
             - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
             - make test

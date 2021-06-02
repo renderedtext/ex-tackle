@@ -26,7 +26,7 @@ INTERACTIVE_SESSION=\
 					-e DOCKER_RABBITMQ_CONTAINER_NAME=$(DOCKER_RABBITMQ_CONTAINER_NAME)\
           --workdir=$(WORKDIR) \
           --user=$(USER) \
-          -it $(ELIXIR_IMAGE):$(ELIXIR_VERSION)
+          -it elixir_docker
 
 CMD?=/bin/bash
 
@@ -41,6 +41,9 @@ rabbit.reset:
 	sudo rabbitmqctl start_app
 
 # Targets for docker based development
+
+build:
+	docker build --build-arg ELIXIR_VERSION=$(ELIXIR_VERSION) -t elixir_docker Dockerfile
 
 console:
 	docker run --network=host $(INTERACTIVE_SESSION) $(CMD)
