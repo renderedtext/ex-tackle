@@ -28,7 +28,7 @@ defmodule Tackle.ListenerTest do
       {response, 0} =
         case System.get_env("DOCKER_RABBITMQ") do
           "true" ->
-            System.cmd "docker", ["exec", "rabbitmq", "rabbitmqctl", "list_queues"]
+            System.cmd "docker", ["exec", System.get_env("DOCKER_RABBITMQ_CONTAINER_NAME"), "rabbitmqctl", "list_queues"]
 
           _ ->
             System.cmd "sudo", ["rabbitmqctl", "list_queues"]
@@ -48,7 +48,7 @@ defmodule Tackle.ListenerTest do
       {response, 0} =
         case System.get_env("DOCKER_RABBITMQ") do
           "true" ->
-            System.cmd "docker", ["exec", "rabbitmq", "rabbitmqctl", "list_queues"]
+            System.cmd "docker", ["exec", System.get_env("DOCKER_RABBITMQ_CONTAINER_NAME"), "rabbitmqctl", "list_queues"]
 
           _ ->
             System.cmd "sudo", ["rabbitmqctl", "list_queues"]
