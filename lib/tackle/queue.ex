@@ -9,7 +9,7 @@ defmodule Tackle.Queue do
 
     Logger.info "Creating queue '#{queue_name}'"
 
-    {:ok, queue} = Queue.declare(channel, queue_name, durable: true)
+    {:ok, _} = Queue.declare(channel, queue_name, durable: true)
 
     queue_name
   end
@@ -19,7 +19,7 @@ defmodule Tackle.Queue do
 
     Logger.info "Creating delay queue '#{queue_name}'"
 
-    {:ok, queue} =
+    {:ok, _} =
       Queue.declare(channel, queue_name, [
         durable: true,
         arguments: [
@@ -37,7 +37,7 @@ defmodule Tackle.Queue do
 
     Logger.info "Creating dead queue '#{queue_name}'"
 
-    {:ok, queue} =
+    {:ok, _} =
       Queue.declare(channel, queue_name, [
         durable: true,
         arguments: [

@@ -23,6 +23,7 @@ INTERACTIVE_SESSION=\
           -e HOME=$(HOME_DIR) \
 					-e MIX_ENV=$(MIX_ENV)\
 					-e DOCKER_RABBITMQ=$(DOCKER_RABBITMQ)\
+					-e DOCKER_RABBITMQ_CONTAINER_NAME=$(DOCKER_RABBITMQ_CONTAINER_NAME)\
           --workdir=$(WORKDIR) \
           --user=$(USER) \
           -it $(ELIXIR_IMAGE):$(ELIXIR_VERSION)

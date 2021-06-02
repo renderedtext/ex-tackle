@@ -9,7 +9,7 @@ defmodule TackleTest do
     exchange = Tackle.Exchange.create(channel, "rapid-exchange")
 
     ms = :timer.tc(fn ->
-      (1..100_000) |> Enum.each(fn i ->
+      (1..100_000) |> Enum.each(fn _ ->
         Tackle.Exchange.publish(channel, exchange, msg, "hello-kye")
       end)
     end) |> elem(0)

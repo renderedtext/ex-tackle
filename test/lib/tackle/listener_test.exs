@@ -8,20 +8,20 @@ defmodule Tackle.ListenerTest do
       routing_key: "test-messages",
       service: "test-service"
 
-    def handle_message(message) do
+    def handle_message(_) do
       IO.puts "here"
     end
   end
 
   describe "consumer creation" do
     it "connects to amqp server without errors" do
-      {response, consumer} = TestConsumer.start_link
+      {response, _} = TestConsumer.start_link
 
       assert response == :ok
     end
 
     it "creates a queue on the amqp server" do
-      {response, consumer} = TestConsumer.start_link
+      {_, _} = TestConsumer.start_link
 
       :timer.sleep(1000)
 
@@ -41,7 +41,7 @@ defmodule Tackle.ListenerTest do
     end
 
     it "creates an exchange on the amqp server" do
-      {response, consumer} = TestConsumer.start_link
+      {_, _} = TestConsumer.start_link
 
       :timer.sleep(1000)
 
