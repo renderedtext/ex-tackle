@@ -1,6 +1,6 @@
 # Tackle
 
-[![Build Status](https://semaphoreci.com/api/v1/projects/ed643936-2795-4ac4-b225-7d33947d4a54/862273/badge.svg)](https://semaphoreci.com/renderedtext/ex-tackle)
+[![Build Status](https://semaphore.semaphoreci.com/badges/ex-tackle/branches/master.svg?style=shields)](https://semaphore.semaphoreci.com/projects/ex-tackle)
 
 Tackles the problem of processing asynchronous jobs in reliable manner
 by relying on RabbitMQ.
