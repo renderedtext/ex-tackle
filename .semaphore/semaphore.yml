@@ -19,21 +19,21 @@ blocks:
             - make console USER=root MIX_ENV=test CMD="mix deps.unlock --check-unused"
             - make console USER=root MIX_ENV=test CMD="mix format --check-formatted"
             - make format.check
-        - name: Testing <= 1.10
+        - name: Testing <= 1.11
           matrix:
             - env_var: ELIXIR_VERSION
-              values: ["1.6", "1.7", "1.8", "1.9", "1.10"]
-          commands:
-            - checkout
-            - make rabbitmq.run
-            - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
-            - make test_1_10
-        - name: Testing >= 1.11
-          matrix:
-            - env_var: ELIXIR_VERSION
-              values: ["1.11", "1.12"]
+              values: ["1.6", "1.7", "1.8", "1.9", "1.10", "1.11"]
           commands:
             - checkout
             - make rabbitmq.run
             - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
             - make test_1_11
+        - name: Testing >= 1.12
+          matrix:
+            - env_var: ELIXIR_VERSION
+              values: ["1.12"]
+          commands:
+            - checkout
+            - make rabbitmq.run
+            - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
+            - make test_1_12
