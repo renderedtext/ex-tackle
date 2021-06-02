@@ -9,14 +9,20 @@ blocks:
   - name: "Tests"
     task:
       jobs:
-      - name: Lint
-        commands:
-          - checkout
-          - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
-          - make format.check
-      - name: Testing
-        commands:
-          - checkout
-          - make rabbitmq.run
-          - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
-          - make test
+        - name: Lint
+          env_vars:
+            - name: ELIXIR_VERSION
+              value: "1.12.1"
+          commands:
+            - checkout
+            - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
+            - make format.check
+        - name: Testing
+          matrix:
+            - env_var: ELIXIR_VERSION
+              values: ["1.6.6", "1.7.4", "1.8.2", "1.9.4", "1.10.4", "1.11.4", "1.12.1"]
+          commands:
+            - checkout
+            - make rabbitmq.run
+            - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
+            - make test
