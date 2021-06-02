@@ -65,7 +65,7 @@ defmodule Tackle.Multiconsumer do
           {:ok, stack}
         end
 
-        def start_link do
+        def start_link(_ \\ nil) do
           import Supervisor.Spec
 
           children =
@@ -77,7 +77,6 @@ defmodule Tackle.Multiconsumer do
                 routing_key
               )
             end)
-            |> Enum.map(fn consumer -> worker(consumer, []) end)
 
           opts = [strategy: :one_for_one, name: __MODULE__]
 

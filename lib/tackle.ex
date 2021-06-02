@@ -7,7 +7,7 @@ defmodule Tackle do
     import Supervisor.Spec, warn: false
 
     children = [
-      worker(Tackle.Connection, [])
+      Tackle.Connection
     ]
 
     opts = [strategy: :one_for_one, name: Tackle.Supervisor]

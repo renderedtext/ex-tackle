@@ -26,7 +26,7 @@ defmodule Tackle.Consumer do
       require Logger
       use GenServer
 
-      def start_link do
+      def start_link(_ \\ nil) do
         GenServer.start_link(__MODULE__, {}, name: __MODULE__)
       end
 

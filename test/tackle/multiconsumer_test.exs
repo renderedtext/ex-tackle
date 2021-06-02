@@ -44,12 +44,21 @@ defmodule Tackle.MulticonsumerTest do
     assert defined_consumer_modules == expected_consumer_modules
   end
 
-  test "successfully starts multiconsumers" do
+  test "successfully starts multiconsumers the old way" do
     import Supervisor.Spec
     opts = [strategy: :one_for_one, name: Front.Supervisor]
 
     Supervisor.start_link(
       [worker(MulticonsumerExample, []), worker(MulticonsumerExampleBeta, [])],
+      opts
+    )
+  end
+
+  test "successfully starts multiconsumers" do
+    opts = [strategy: :one_for_one, name: Front.Supervisor]
+
+    Supervisor.start_link(
+      [MulticonsumerExample, MulticonsumerExampleBeta],
       opts
     )
   end
