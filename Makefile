@@ -12,7 +12,7 @@ DOCKER_RABBITMQ=false
 DOCKER_RABBITMQ_CONTAINER_NAME=rabbitmq
 
 # base elixir image extended with docker
-ELIXIR_IMAGE=elixir
+ELIXIR_IMAGE=registry.semaphoreci.com/elixir
 ELIXIR_VERSION ?= 1.6
 
 INTERACTIVE_SESSION=\
