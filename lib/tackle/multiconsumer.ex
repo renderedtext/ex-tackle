@@ -61,6 +61,10 @@ defmodule Tackle.Multiconsumer do
         use Supervisor
         require Logger
 
+        def init(stack) do
+          {:ok, stack}
+        end
+
         def start_link do
           import Supervisor.Spec
 
