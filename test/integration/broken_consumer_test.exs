@@ -4,6 +4,8 @@ defmodule Tackle.BrokenConsumerTest do
   alias Support
   alias Support.MessageTrace
 
+  import ExUnit.CaptureIO
+
   defmodule BrokenConsumer do
     use Tackle.Consumer,
       url: "amqp://localhost",
@@ -16,8 +18,10 @@ defmodule Tackle.BrokenConsumerTest do
     def handle_message(message) do
       message |> MessageTrace.save("broken-service")
 
-      # exception
-      :a + 1
+      capture_io(fn ->
+        # exception
+        :a + 1
+      end)
     end
   end
 
