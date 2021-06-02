@@ -25,7 +25,7 @@ defmodule Tackle.DeliveryHandlerTest do
 
     it "consume generates arithmetic exception" do
       assert :badarith ==
-               TestConsumer.delivery_handler(fn -> raise ArithmeticError end, fn reason ->
+               TestConsumer.delivery_handler(fn -> :asd - 1 end, fn reason ->
                  reason
                end)
                |> elem(0)
