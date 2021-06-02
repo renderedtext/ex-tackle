@@ -47,7 +47,8 @@ defmodule Tackle.ConnectionErrorsTest do
 
       :timer.sleep(1000)
 
-      raise ArithmeticError
+      # exception
+      :a + 1
     end
   end
 
@@ -70,7 +71,8 @@ defmodule Tackle.ConnectionErrorsTest do
 
       :timer.sleep(1000)
 
-      raise ArithmeticError
+      # exception
+      :a + 1
     end
   end
 

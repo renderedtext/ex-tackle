@@ -16,7 +16,8 @@ defmodule Tackle.BrokenConsumerTest do
     def handle_message(message) do
       message |> MessageTrace.save("broken-service")
 
-      raise ArithmeticError
+      # exception
+      :a + 1
     end
   end
 

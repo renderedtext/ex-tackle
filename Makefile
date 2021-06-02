@@ -46,10 +46,10 @@ console:
 	docker run --network=host $(INTERACTIVE_SESSION) $(CMD)
 
 test_1_10:
-	$(MAKE) console DOCKER_RABBITMQ=true DOCKER_RABBITMQ_CONTAINER_NAME=$(DOCKER_RABBITMQ_CONTAINER_NAME) MIX_ENV=test CMD="mix do compile --warnings-as-errors, test --trace $(FILE)"; \
+	$(MAKE) console DOCKER_RABBITMQ=true DOCKER_RABBITMQ_CONTAINER_NAME=$(DOCKER_RABBITMQ_CONTAINER_NAME) MIX_ENV=test CMD="mix test --trace $(FILE)"; \
 
 test_1_11:
-	$(MAKE) console DOCKER_RABBITMQ=true DOCKER_RABBITMQ_CONTAINER_NAME=$(DOCKER_RABBITMQ_CONTAINER_NAME) MIX_ENV=test CMD="mix do compile --warnings-as-errors, test --warnings-as-errors --trace $(FILE)"; \
+	$(MAKE) console DOCKER_RABBITMQ=true DOCKER_RABBITMQ_CONTAINER_NAME=$(DOCKER_RABBITMQ_CONTAINER_NAME) MIX_ENV=test CMD="mix test --warnings-as-errors --trace $(FILE)"; \
 
 format.check:
 	$(MAKE) console CMD="mix format --check-formatted"

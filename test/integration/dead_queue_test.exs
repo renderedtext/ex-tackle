@@ -13,7 +13,8 @@ defmodule Tackle.DeadQueueTest do
       retry_limit: 3
 
     def handle_message(_message) do
-      raise ArithmeticError
+      # exception
+      :a + 1
     end
   end
 
