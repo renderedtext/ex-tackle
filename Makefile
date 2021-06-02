@@ -48,6 +48,9 @@ console:
 test:
 	$(MAKE) console DOCKER_RABBITMQ=true DOCKER_RABBITMQ_CONTAINER_NAME=$(DOCKER_RABBITMQ_CONTAINER_NAME) MIX_ENV=test CMD="mix test --trace $(FILE)"
 
+format.check:
+	$(MAKE) console CMD="mix format --check-formatted"
+
 rabbitmq.run:
 	docker run -d --rm --name $(DOCKER_RABBITMQ_CONTAINER_NAME) --network=host --memory 512m rabbitmq:3.7
 

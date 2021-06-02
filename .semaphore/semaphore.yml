@@ -9,6 +9,11 @@ blocks:
   - name: "Tests"
     task:
       jobs:
+      - name: Lint
+        commands:
+          - checkout
+          - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
+          - make format.check
       - name: Testing
         commands:
           - checkout
