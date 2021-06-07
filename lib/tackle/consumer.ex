@@ -1,6 +1,6 @@
 defmodule Tackle.Consumer do
   defmodule Behaviour do
-    @callback handle_message(String.t) :: any
+    @callback handle_message(String.t()) :: any
   end
 
   # Sequential message handling by default
@@ -26,31 +26,33 @@ defmodule Tackle.Consumer do
       require Logger
       use GenServer
 
-      def start_link do
+      def start_link(_ \\ nil) do
         GenServer.start_link(__MODULE__, {}, name: __MODULE__)
       end
 
       def init({}) do
         url = unquote(url)
         service_name_prefix = Application.get_env(:tackle, :service_name_prefix)
+
         service =
           if service_name_prefix do
             "#{service_name_prefix}.#{unquote(service)}"
           else
             unquote(service)
           end
+
         routing_key = unquote(routing_key)
         retry_delay = unquote(retry_delay)
         retry_limit = unquote(retry_limit)
         prefetch_count = unquote(prefetch_count)
-        connection_id  = unquote(connection_id)
+        connection_id = unquote(connection_id)
 
         {:ok, connection} = Tackle.Connection.open(connection_id, url)
         # Get notifications when the connection goes down
         Process.monitor(connection.pid)
         channel = Tackle.Channel.create(connection, prefetch_count)
 
-        remote_exchange  = unquote(exchange)
+        remote_exchange = unquote(exchange)
         service_exchange = Tackle.Exchange.create(channel, service, routing_key)
 
         Tackle.Exchange.bind_to_remote(
@@ -60,9 +62,11 @@ defmodule Tackle.Consumer do
           routing_key
         )
 
-        queue       = Tackle.Queue.create_queue(channel, service_exchange)
-        dead_queue  = Tackle.Queue.create_dead_queue(channel, service_exchange)
-        delay_queue = Tackle.Queue.create_delay_queue(channel, service_exchange, routing_key, retry_delay)
+        queue = Tackle.Queue.create_queue(channel, service_exchange)
+        dead_queue = Tackle.Queue.create_dead_queue(channel, service_exchange)
+
+        delay_queue =
+          Tackle.Queue.create_delay_queue(channel, service_exchange, routing_key, retry_delay)
 
         Tackle.Exchange.bind_to_queue(
           channel,
@@ -85,8 +89,8 @@ defmodule Tackle.Consumer do
       end
 
       def handle_info({:basic_consume_ok, _}, state), do: {:noreply, state}
-      def handle_info({:basic_cancel, _},     state), do: {:stop, :normal, state}
-      def handle_info({:basic_cancel_ok, _},  state), do: {:noreply, state}
+      def handle_info({:basic_cancel, _}, state), do: {:stop, :normal, state}
+      def handle_info({:basic_cancel_ok, _}, state), do: {:noreply, state}
 
       def handle_info({:basic_deliver, payload, %{delivery_tag: tag, headers: headers}}, state) do
         consume_callback = fn ->
@@ -95,12 +99,12 @@ defmodule Tackle.Consumer do
         end
 
         error_callback = fn reason ->
-          Logger.error "Consumption failed: #{inspect reason}; payload: #{inspect payload}"
+          Logger.error("Consumption failed: #{inspect(reason)}; payload: #{inspect(payload)}")
           retry(state, payload, headers)
-          :ok = AMQP.Basic.nack(state.channel, tag, [multiple: false, requeue: false])
+          :ok = AMQP.Basic.nack(state.channel, tag, multiple: false, requeue: false)
         end
 
-        spawn(fn-> delivery_handler(consume_callback, error_callback) end)
+        spawn(fn -> delivery_handler(consume_callback, error_callback) end)
 
         {:noreply, state}
       end
@@ -132,21 +136,23 @@ defmodule Tackle.Consumer do
         ]
 
         if retry_count < state.retry_limit do
-          Logger.info "Sending message to a delay queue"
+          Logger.info("Sending message to a delay queue")
 
           Tackle.DelayedRetry.publish(
             state.url,
             state.delay_queue,
             payload,
-            options)
+            options
+          )
         else
-          Logger.info "Sending message to a dead messages queue"
+          Logger.info("Sending message to a dead messages queue")
 
           Tackle.DelayedRetry.publish(
             state.url,
             state.dead_queue,
             payload,
-            options)
+            options
+          )
         end
       end
     end

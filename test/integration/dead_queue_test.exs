@@ -12,15 +12,16 @@ defmodule Tackle.DeadQueueTest do
       retry_delay: 1,
       retry_limit: 3
 
-    def handle_message(message) do
-      :a + 1 # exception
+    def handle_message(_message) do
+      # exception
+      :a + 1
     end
   end
 
   @publish_options %{
     url: "amqp://localhost",
     exchange: "test-exchange",
-    routing_key: "test-messages",
+    routing_key: "test-messages"
   }
 
   @dead_queue "dead-service.test-messages.dead"
@@ -29,7 +30,7 @@ defmodule Tackle.DeadQueueTest do
     Support.purge_queue("dead-service.test-messages")
     Support.purge_queue(@dead_queue, true)
 
-    {:ok, _} = DeadConsumer.start_link
+    {:ok, _} = DeadConsumer.start_link()
 
     :ok
   end

@@ -1,6 +1,6 @@
 defmodule Tackle.ConnectionTest do
   use ExUnit.Case
-  doctest Tackle.Connection, [import: true]
+  doctest Tackle.Connection, import: true
 
   setup_all do
     # Forget all opened connections
@@ -24,7 +24,11 @@ defmodule Tackle.ConnectionTest do
     assert get_connection_pid(:bar) != pid
   end
 
-  def get_connection_pid(name) do Tackle.Connection.open(name, []) |> get_pid end
+  def get_connection_pid(name) do
+    Tackle.Connection.open(name, []) |> get_pid
+  end
 
-  def get_pid({:ok, connection}) do connection |> Map.get(:pid) end
+  def get_pid({:ok, connection}) do
+    connection |> Map.get(:pid)
+  end
 end

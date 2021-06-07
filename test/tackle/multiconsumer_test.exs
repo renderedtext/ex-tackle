@@ -9,7 +9,7 @@ defmodule Tackle.MulticonsumerTest do
         {"exchange-1", "key1", :handler}
       ]
 
-    def handler(message) do
+    def handler(_message) do
       IO.puts("Handled!")
     end
   end
@@ -22,28 +22,44 @@ defmodule Tackle.MulticonsumerTest do
         {"exchange-1", "key1", :handler}
       ]
 
-    def handler(message) do
+    def handler(_message) do
       IO.puts("Handled!")
     end
   end
 
   test "inspect modules" do
-    defined_consumer_modules = :code.all_loaded()
-                       |> Enum.map(fn {mod, _} -> mod end)
-                       |> Enum.filter(fn module -> String.contains?(Atom.to_string(module), "exchange-1.key1") end)
-                       |> Enum.sort()
+    defined_consumer_modules =
+      :code.all_loaded()
+      |> Enum.map(fn {mod, _} -> mod end)
+      |> Enum.filter(fn module -> String.contains?(Atom.to_string(module), "exchange-1.key1") end)
+      |> Enum.sort()
 
     expected_consumer_modules =
-      [:"Elixir.Tackle.MulticonsumerTest.MulticonsumerExampleBeta.exchange-1.key1",
-       :"Elixir.Tackle.MulticonsumerTest.MulticonsumerExample.exchange-1.key1"]
-       |> Enum.sort()
+      [
+        :"Elixir.Tackle.MulticonsumerTest.MulticonsumerExampleBeta.exchange-1.key1",
+        :"Elixir.Tackle.MulticonsumerTest.MulticonsumerExample.exchange-1.key1"
+      ]
+      |> Enum.sort()
 
     assert defined_consumer_modules == expected_consumer_modules
   end
 
-  test "successfully starts multiconsumers" do
+  test "successfully starts multiconsumers the old way" do
     import Supervisor.Spec
     opts = [strategy: :one_for_one, name: Front.Supervisor]
-    Supervisor.start_link([worker(MulticonsumerExample, []), worker(MulticonsumerExampleBeta, [])], opts)
+
+    Supervisor.start_link(
+      [worker(MulticonsumerExample, []), worker(MulticonsumerExampleBeta, [])],
+      opts
+    )
+  end
+
+  test "successfully starts multiconsumers" do
+    opts = [strategy: :one_for_one, name: Front.Supervisor]
+
+    Supervisor.start_link(
+      [MulticonsumerExample, MulticonsumerExampleBeta],
+      opts
+    )
   end
 end

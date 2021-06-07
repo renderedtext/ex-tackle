@@ -16,14 +16,14 @@ defmodule Tackle.BrokenConsumerThrowsTest do
     def handle_message(message) do
       message |> MessageTrace.save("broken-service-throw")
 
-      throw {1, 3, 4}
+      throw({1, 3, 4})
     end
   end
 
   @publish_options %{
     url: "amqp://localhost",
     exchange: "test-exchange",
-    routing_key: "test-messages",
+    routing_key: "test-messages"
   }
 
   setup do
@@ -31,7 +31,7 @@ defmodule Tackle.BrokenConsumerThrowsTest do
 
     MessageTrace.clear("broken-service-throw")
 
-    {:ok, _} = BrokenConsumer.start_link
+    {:ok, _} = BrokenConsumer.start_link()
 
     :timer.sleep(1000)
   end

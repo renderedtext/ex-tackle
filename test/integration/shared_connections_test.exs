@@ -29,20 +29,20 @@ defmodule Tackle.SharedConnection.Test do
 
   def message_handler(message, response) do
     "#PID" <> pid = message
-    client = pid |> String.to_char_list |> :erlang.list_to_pid
+    client = pid |> String.to_charlist() |> :erlang.list_to_pid()
     send(client, response)
   end
 
   @publish_options_1 %{
     url: "amqp://localhost",
     exchange: "test-multiple-channels-exchange-1",
-    routing_key: "multiple-channels",
+    routing_key: "multiple-channels"
   }
 
   @publish_options_2 %{
     url: "amqp://localhost",
     exchange: "test-multiple-channels-exchange-2",
-    routing_key: "multiple-channels",
+    routing_key: "multiple-channels"
   }
 
   setup_all do
@@ -52,14 +52,14 @@ defmodule Tackle.SharedConnection.Test do
   end
 
   describe "shared connection" do
-    it "- reopen consumers", context do
-      {:ok, c1} = TestConsumer1.start_link
-      {:ok, c2} = TestConsumer2.start_link
+    it "- reopen consumers", _context do
+      {:ok, c1} = TestConsumer1.start_link()
+      {:ok, c2} = TestConsumer2.start_link()
 
       # only one connection opend
-      assert Tackle.Connection.get_all() |> Enum.count == 1
+      assert Tackle.Connection.get_all() |> Enum.count() == 1
 
-      verify_consumer_functionality
+      verify_consumer_functionality()
 
       # kill consumers
       Process.unlink(c1)
@@ -68,25 +68,25 @@ defmodule Tackle.SharedConnection.Test do
       Process.exit(c2, :kill)
 
       # kill connection process
-      assert Tackle.Connection.get_all() |> Enum.count == 1
-      old_pid = get_all_connections
+      assert Tackle.Connection.get_all() |> Enum.count() == 1
+      old_pid = get_all_connections()
       old_pid |> Process.exit(:kill)
 
-      #restart consumers
-      {:ok, _} = TestConsumer1.start_link
-      {:ok, _} = TestConsumer2.start_link
+      # restart consumers
+      {:ok, _} = TestConsumer1.start_link()
+      {:ok, _} = TestConsumer2.start_link()
 
       # new connection process?
-      assert Tackle.Connection.get_all() |> Enum.count == 1
-      new_pid = get_all_connections
+      assert Tackle.Connection.get_all() |> Enum.count() == 1
+      new_pid = get_all_connections()
       assert old_pid != new_pid
 
-      verify_consumer_functionality
+      verify_consumer_functionality()
     end
 
     def verify_consumer_functionality do
-      Tackle.publish(self |> inspect, @publish_options_1)
-      Tackle.publish(self |> inspect, @publish_options_2)
+      Tackle.publish(self() |> inspect, @publish_options_1)
+      Tackle.publish(self() |> inspect, @publish_options_2)
 
       response = rcv() <> rcv()
       assert String.contains?(response, "consumer_1")
@@ -94,9 +94,13 @@ defmodule Tackle.SharedConnection.Test do
     end
 
     def get_all_connections do
-      Tackle.Connection.get_all |> Keyword.get(:single_connection) |> Map.get(:pid)
+      Tackle.Connection.get_all() |> Keyword.get(:single_connection) |> Map.get(:pid)
     end
 
-    def rcv do receive do msg -> msg end end
+    def rcv do
+      receive do
+        msg -> msg
+      end
+    end
   end
 end

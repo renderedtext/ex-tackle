@@ -24,10 +24,12 @@ defmodule Support do
     {:ok, channel} = AMQP.Channel.open(connection)
 
     if set_ttl do
-      AMQP.Queue.declare(channel, queue_name, durable: true,
-      arguments: [
-        {"x-message-ttl", :long, 604800000}
-      ])
+      AMQP.Queue.declare(channel, queue_name,
+        durable: true,
+        arguments: [
+          {"x-message-ttl", :long, 604_800_000}
+        ]
+      )
     else
       AMQP.Queue.declare(channel, queue_name, durable: true)
     end
@@ -53,7 +55,6 @@ defmodule Support do
       File.read!("/tmp/#{trace_name}")
     end
   end
-
 end
 
-ExUnit.start([trace: true])
+ExUnit.start(trace: true)

@@ -9,10 +9,11 @@ WORKDIR=$(HOME_DIR)/ex-tackle
 # Some tests are using rabbitmqctl tool, so it is important to know whether to
 # use it localy via system call or inside a docker container.
 DOCKER_RABBITMQ=false
+DOCKER_RABBITMQ_CONTAINER_NAME=rabbitmq
 
 # base elixir image extended with docker
-ELIXIR_IMAGE=semaphoreci/elixir
-ELIXIR_VERSION=1.6.5
+ELIXIR_IMAGE=registry.semaphoreci.com/elixir
+ELIXIR_VERSION ?= 1.6
 
 INTERACTIVE_SESSION=\
           -v $$PWD/home_dir:$(HOME_DIR) \
@@ -22,6 +23,7 @@ INTERACTIVE_SESSION=\
           -e HOME=$(HOME_DIR) \
 					-e MIX_ENV=$(MIX_ENV)\
 					-e DOCKER_RABBITMQ=$(DOCKER_RABBITMQ)\
+					-e DOCKER_RABBITMQ_CONTAINER_NAME=$(DOCKER_RABBITMQ_CONTAINER_NAME)\
           --workdir=$(WORKDIR) \
           --user=$(USER) \
           -it $(ELIXIR_IMAGE):$(ELIXIR_VERSION)
@@ -44,10 +46,13 @@ console:
 	docker run --network=host $(INTERACTIVE_SESSION) $(CMD)
 
 test:
-	$(MAKE) console DOCKER_RABBITMQ=true MIX_ENV=test CMD="mix test --trace $(FILE)"
+	$(MAKE) console DOCKER_RABBITMQ=true DOCKER_RABBITMQ_CONTAINER_NAME=$(DOCKER_RABBITMQ_CONTAINER_NAME) MIX_ENV=test CMD="mix test --trace $(FILE)"; \
+
+format.check:
+	$(MAKE) console CMD="mix format --check-formatted"
 
 rabbitmq.run:
-	docker run -d --rm --name rabbitmq --network=host --memory 512m rabbitmq:3.7
+	docker run -d --rm --name $(DOCKER_RABBITMQ_CONTAINER_NAME) --network=host --memory 512m rabbitmq:3.7
 
 rabbitmq.reset:
 	docker kill rabbitmq
