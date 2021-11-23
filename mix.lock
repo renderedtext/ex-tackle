@@ -1,5 +1,5 @@
 %{
-  "amqp": {:hex, :amqp, "2.1.2", "eab047abb54f7e30022b81b9534b797e51c6e7756f1b112ec6dcee3c3ac20eac", [:mix], [{:amqp_client, "~> 3.8.0", [hex: :amqp_client, repo: "hexpm", optional: false]}], "hexpm", "535901c611a979221d045839e9e7a661bf33d04590b796c8fa30f487511fde04"},
+  "amqp": {:hex, :amqp, "1.6.0", "736d976f53780bcee72ccc50f7eb36e3d5881354480b1e34ceac84e3bbd954e9", [:mix], [{:amqp_client, "~> 3.8.0", [hex: :amqp_client, repo: "hexpm", optional: false]}], "hexpm", "b8168919ea1f1571a68349421e6501d1db7f559c4db3b8324ae90dbd3e2c1c4a"},
   "amqp_client": {:hex, :amqp_client, "3.8.25", "6035b3cc946cd45c7bc09c590bfb31de2b106e79564709b8c40e1c25f66b47ee", [:make, :rebar3], [{:rabbit_common, "3.8.25", [hex: :rabbit_common, repo: "hexpm", optional: false]}], "hexpm", "3b5889fe922c212acf9bfa355495d6a8a0a507591b54c0d4183d755a9b5a61ce"},
   "credentials_obfuscation": {:hex, :credentials_obfuscation, "2.4.0", "9fb57683b84899ca3546b384e59ab5d3054a9f334eba50d74c82cd0ae82dd6ca", [:rebar3], [], "hexpm", "d28a89830e30698b075de9a4dbe683a20685c6bed1e3b7df744a0c06e6ff200a"},
   "ex_spec": {:hex, :ex_spec, "2.0.1", "8bdbd6fa85995fbf836ed799571d44be6f9ebbcace075209fd0ad06372c111cf", [:mix], [], "hexpm", "b44fe5054497411a58341ece5bf7756c219d9d6c1303b5ac467f557a0a4c31ac"},

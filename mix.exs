@@ -18,7 +18,7 @@ defmodule Tackle.Mixfile do
 
   defp deps do
     [
-      {:amqp, "~> 2.1.2"},
+      {:amqp, "~> 1.6.0"},
       {:ex_spec, "~> 2.0", only: :test}
     ]
   end
