@@ -13,7 +13,7 @@ DOCKER_RABBITMQ_CONTAINER_NAME=rabbitmq
 
 # base elixir image extended with docker
 ELIXIR_IMAGE=registry.semaphoreci.com/elixir
-ELIXIR_VERSION ?= 1.6
+ELIXIR_VERSION ?= 1.10
 
 INTERACTIVE_SESSION=\
           -v $$PWD/home_dir:$(HOME_DIR) \
