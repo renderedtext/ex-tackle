@@ -52,7 +52,7 @@ format.check:
 	$(MAKE) console CMD="mix format --check-formatted"
 
 rabbitmq.run:
-	docker run -d --rm --name $(DOCKER_RABBITMQ_CONTAINER_NAME) --network=host --memory 512m rabbitmq:3.7
+	docker run -d --rm --name $(DOCKER_RABBITMQ_CONTAINER_NAME) --network=host --memory 512m rabbitmq:3.8
 
 rabbitmq.reset:
 	docker kill rabbitmq
