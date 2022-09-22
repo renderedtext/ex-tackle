@@ -15,6 +15,7 @@ defmodule Tackle.DelayedRetry do
 
     :ok = AMQP.Basic.publish(channel, "", queue, payload, options)
 
+    AMQP.Channel.close(channel)
     AMQP.Connection.close(connection)
   end
 end

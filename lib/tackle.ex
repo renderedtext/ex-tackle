@@ -28,6 +28,7 @@ defmodule Tackle do
 
     Tackle.Exchange.publish(channel, exchange, message, routing_key)
 
+    AMQP.Channel.close(channel)
     AMQP.Connection.close(connection)
   end
 

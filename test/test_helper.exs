@@ -5,6 +5,7 @@ defmodule Support do
 
     AMQP.Exchange.direct(channel, exchange_name, durable: true)
 
+    AMQP.Channel.close(channel)
     AMQP.Connection.close(connection)
   end
 
@@ -14,6 +15,7 @@ defmodule Support do
 
     {:ok, status} = AMQP.Queue.status(channel, queue_name)
 
+    AMQP.Channel.close(channel)
     AMQP.Connection.close(connection)
 
     status
@@ -36,6 +38,7 @@ defmodule Support do
 
     AMQP.Queue.purge(channel, queue_name)
 
+    AMQP.Channel.close(channel)
     AMQP.Connection.close(connection)
   end
 

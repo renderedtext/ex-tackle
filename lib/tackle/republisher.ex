@@ -14,6 +14,7 @@ defmodule Tackle.Republisher do
       republish_one_message(channel, queue, exchange, routing_key)
     end)
 
+    AMQP.Channel.close(channel)
     AMQP.Connection.close(connection)
   end
 
