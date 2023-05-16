@@ -57,4 +57,4 @@ defmodule Support do
   end
 end
 
-ExUnit.start(trace: true)
+ExUnit.start(trace: true, capture_log: true)

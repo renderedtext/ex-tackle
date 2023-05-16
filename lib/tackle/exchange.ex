@@ -2,8 +2,26 @@ defmodule Tackle.Exchange do
   use AMQP
   require Logger
 
-  def create(channel, name) do
-    :ok = Exchange.direct(channel, name, durable: true)
+  def create(channel, name, opts \\ []) do
+    # Used for declaring local service exchange
+    name =
+      opts[:routing_key]
+      |> case do
+        nil -> name
+        routing_key -> "#{name}.#{routing_key}"
+      end
+
+    opts[:type]
+    |> case do
+      :fanout ->
+        :ok = Exchange.fanout(channel, name, durable: true)
+
+      :topic ->
+        :ok = Exchange.topic(channel, name, durable: true)
+
+      _ ->
+        :ok = Exchange.direct(channel, name, durable: true)
+    end
 
     name
   end
@@ -16,11 +34,6 @@ defmodule Tackle.Exchange do
       message,
       persistent: true
     )
-  end
-
-  # Used for declaring local service exchange
-  def create(channel, service_name, routing_key) do
-    create(channel, "#{service_name}.#{routing_key}")
   end
 
   def bind_to_remote(channel, service_exchange, remote_exchange, routing_key) do

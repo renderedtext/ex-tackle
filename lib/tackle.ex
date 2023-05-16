@@ -18,13 +18,14 @@ defmodule Tackle do
     url = options[:url]
     exchange = options[:exchange]
     routing_key = options[:routing_key]
+    type = options[:exchange_type]
 
     Logger.debug("Connecting to '#{url}'")
     {:ok, connection} = AMQP.Connection.open(url)
     channel = Tackle.Channel.create(connection)
 
     Logger.debug("Declaring an exchange '#{exchange}'")
-    Tackle.Exchange.create(channel, exchange)
+    Tackle.Exchange.create(channel, exchange, type: type)
 
     Tackle.Exchange.publish(channel, exchange, message, routing_key)
 
