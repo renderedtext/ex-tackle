@@ -12,6 +12,7 @@ defmodule Tackle.Consumer do
     exchange = options[:exchange]
     routing_key = options[:routing_key]
     service = options[:service]
+    exchange_type = options[:exchange_type] || :direct
 
     retry_delay = options[:retry_delay] || 10
     retry_limit = options[:retry_limit] || 10
@@ -46,6 +47,7 @@ defmodule Tackle.Consumer do
         retry_limit = unquote(retry_limit)
         prefetch_count = unquote(prefetch_count)
         connection_id = unquote(connection_id)
+        exchange_type = unquote(exchange_type)
 
         {:ok, connection} = Tackle.Connection.open(connection_id, url)
         # Get notifications when the connection goes down
@@ -53,7 +55,14 @@ defmodule Tackle.Consumer do
         channel = Tackle.Channel.create(connection, prefetch_count)
 
         remote_exchange = unquote(exchange)
-        service_exchange = Tackle.Exchange.create(channel, service, routing_key: routing_key)
+
+        service_exchange =
+          Tackle.Exchange.create(
+            channel,
+            service,
+            routing_key: routing_key,
+            type: exchange_type
+          )
 
         Tackle.Exchange.bind_to_remote(
           channel,
