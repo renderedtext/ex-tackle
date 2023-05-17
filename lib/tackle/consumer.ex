@@ -20,6 +20,7 @@ defmodule Tackle.Consumer do
     prefetch_count = options[:prefetch_count] || @prefetch_count
 
     connection_id = options[:connection_id] || :default
+    queue_name = options[:queue_name]
 
     quote do
       @behaviour Tackle.Consumer.Behaviour
@@ -27,11 +28,12 @@ defmodule Tackle.Consumer do
       require Logger
       use GenServer
 
-      def start_link(_ \\ nil) do
-        GenServer.start_link(__MODULE__, {}, name: __MODULE__)
+      def start_link(opts \\ []) do
+        process_name = Keyword.get(opts, :process_name, __MODULE__)
+        GenServer.start_link(__MODULE__, [], name: process_name)
       end
 
-      def init({}) do
+      def init(_) do
         url = unquote(url)
         service_name_prefix = Application.get_env(:tackle, :service_name_prefix)
 
@@ -71,11 +73,19 @@ defmodule Tackle.Consumer do
           routing_key
         )
 
-        queue = Tackle.Queue.create_queue(channel, service_exchange)
-        dead_queue = Tackle.Queue.create_dead_queue(channel, service_exchange)
+        queue_name =
+          unquote(queue_name)
+          |> case do
+            nil -> service_exchange
+            :dynamic -> unique_name(20)
+            name -> name
+          end
+
+        queue = Tackle.Queue.create_queue(channel, queue_name)
+        dead_queue = Tackle.Queue.create_dead_queue(channel, queue_name)
 
         delay_queue =
-          Tackle.Queue.create_delay_queue(channel, service_exchange, routing_key, retry_delay)
+          Tackle.Queue.create_delay_queue(channel, queue_name, routing_key, retry_delay)
 
         Tackle.Exchange.bind_to_queue(
           channel,
@@ -163,6 +173,11 @@ defmodule Tackle.Consumer do
             options
           )
         end
+      end
+
+      defp unique_name(length) do
+        :crypto.strong_rand_bytes(length)
+        |> Base.encode32(padding: false)
       end
     end
   end
