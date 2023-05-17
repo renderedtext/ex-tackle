@@ -1,12 +1,12 @@
 defmodule Tackle.RepublishTest do
-  use ExSpec
+  use ExUnit.Case, async: false
 
   alias Support
   alias Support.MessageTrace
 
   defmodule BrokenConsumer do
     use Tackle.Consumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       exchange: "test-exchange",
       routing_key: "test-messages",
       service: "republish-service",
@@ -21,7 +21,7 @@ defmodule Tackle.RepublishTest do
 
   defmodule FixedConsumer do
     use Tackle.Consumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       exchange: "test-exchange",
       routing_key: "test-messages",
       service: "republish-service",
@@ -34,7 +34,7 @@ defmodule Tackle.RepublishTest do
   end
 
   @publish_options %{
-    url: "amqp://localhost",
+    url: "amqp://rabbitmq:5672",
     exchange: "test-exchange",
     routing_key: "test-messages"
   }
@@ -85,7 +85,7 @@ defmodule Tackle.RepublishTest do
       :timer.sleep(1000)
 
       Tackle.republish(%{
-        url: "amqp://localhost",
+        url: "amqp://rabbitmq:5672",
         queue: @dead_queue,
         exchange: "test-exchange",
         routing_key: "test-messages",
@@ -95,11 +95,11 @@ defmodule Tackle.RepublishTest do
       :timer.sleep(2000)
     end
 
-    it "consumes only two messages" do
+    test "consumes only two messages" do
       assert MessageTrace.content("fixed-service") == "Hi there!"
     end
 
-    it "leaves the remaining messages in the dead qeueue" do
+    test "leaves the remaining messages in the dead qeueue" do
       assert Support.queue_status(@dead_queue).message_count == 1
     end
   end

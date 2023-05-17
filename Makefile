@@ -1,59 +1,27 @@
 .PHONY: test
 
-USER=root
-MIX_ENV=dev
-HOME_DIR=/home/
-WORKDIR=$(HOME_DIR)/ex-tackle
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+ELIXIR_VERSION?=1.14
 
-# True if rabbitmq used for testing is running inside docker container.
-# Some tests are using rabbitmqctl tool, so it is important to know whether to
-# use it localy via system call or inside a docker container.
-DOCKER_RABBITMQ=false
-DOCKER_RABBITMQ_CONTAINER_NAME=rabbitmq
+ifeq ($(CI),)
+	DOCKER_COMPOSE_OPTS=-f docker-compose.yml -f docker-compose.dev.yml
+	export BUILDKIT_INLINE_CACHE=0
+else
+	DOCKER_COMPOSE_OPTS=-f docker-compose.yml
+	export BUILDKIT_INLINE_CACHE=1
+endif
 
-# base elixir image extended with docker
-ELIXIR_IMAGE=registry.semaphoreci.com/elixir
-ELIXIR_VERSION ?= 1.6
-
-INTERACTIVE_SESSION=\
-          -v $$PWD/home_dir:$(HOME_DIR) \
-          -v $$PWD/:$(WORKDIR) \
-					-v /var/run/docker.sock:/var/run/docker.sock \
-				  --rm \
-          -e HOME=$(HOME_DIR) \
-					-e MIX_ENV=$(MIX_ENV)\
-					-e DOCKER_RABBITMQ=$(DOCKER_RABBITMQ)\
-					-e DOCKER_RABBITMQ_CONTAINER_NAME=$(DOCKER_RABBITMQ_CONTAINER_NAME)\
-          --workdir=$(WORKDIR) \
-          --user=$(USER) \
-          -it $(ELIXIR_IMAGE):$(ELIXIR_VERSION)
-
-CMD?=/bin/bash
-
-# For development without docker
-
-local.test:
-	mix test --trace
-
-rabbit.reset:
-	sudo rabbitmqctl stop_app
-	sudo rabbitmqctl reset    # Be sure you really want to do this!
-	sudo rabbitmqctl start_app
-
-# Targets for docker based development
-
+console: build
 console:
-	docker run --network=host $(INTERACTIVE_SESSION) $(CMD)
+	docker compose $(DOCKER_COMPOSE_OPTS) run app $(CMD)
 
+test: build
 test:
-	$(MAKE) console DOCKER_RABBITMQ=true DOCKER_RABBITMQ_CONTAINER_NAME=$(DOCKER_RABBITMQ_CONTAINER_NAME) MIX_ENV=test CMD="mix test --trace $(FILE)"; \
+	docker compose $(DOCKER_COMPOSE_OPTS) run app mix test
+
+build:
+	docker compose $(DOCKER_COMPOSE_OPTS) build --build-arg ELIXIR_VERSION=$(ELIXIR_VERSION) app
 
 format.check:
 	$(MAKE) console CMD="mix format --check-formatted"
-
-rabbitmq.run:
-	docker run -d --rm --name $(DOCKER_RABBITMQ_CONTAINER_NAME) --network=host --memory 512m rabbitmq:3.7
-
-rabbitmq.reset:
-	docker kill rabbitmq
-	$(MAKE) rabbitmq.run

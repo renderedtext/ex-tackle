@@ -5,8 +5,12 @@ defmodule Tackle.Queue do
   # one week in milliseconds
   @dead_letter_timeout 604_800_000
 
-  def create_queue(channel, service_exchange) do
+  def create_queue(channel, service_exchange, opts \\ []) do
     queue_name = service_exchange
+
+    defaults = [
+      durable: true
+    ]
 
     Logger.info("Creating queue '#{queue_name}'")
 

@@ -19,7 +19,7 @@ defmodule Tackle.Mixfile do
   defp deps do
     [
       {:amqp, "~> 1.1.0"},
-      {:ex_spec, "~> 2.0", only: :test}
+      {:junit_formatter, "~> 3.3", only: [:test]}
     ]
   end
 end

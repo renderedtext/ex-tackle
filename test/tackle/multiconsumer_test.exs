@@ -3,7 +3,7 @@ defmodule Tackle.MulticonsumerTest do
 
   defmodule MulticonsumerExample do
     use Tackle.Multiconsumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       service: "example_service",
       routes: [
         {"exchange-1", "key1", :handler}
@@ -16,7 +16,7 @@ defmodule Tackle.MulticonsumerTest do
 
   defmodule MulticonsumerExampleBeta do
     use Tackle.Multiconsumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       service: "#{System.get_env("A")}.example_beta_service",
       routes: [
         {"exchange-1", "key1", :handler}

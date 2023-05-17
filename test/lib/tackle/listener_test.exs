@@ -1,9 +1,9 @@
 defmodule Tackle.ListenerTest do
-  use ExSpec
+  use ExUnit.Case, async: false
 
   defmodule TestConsumer do
     use Tackle.Consumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       exchange: "test-exchange",
       routing_key: "test-messages",
       service: "test-service"
@@ -13,57 +13,31 @@ defmodule Tackle.ListenerTest do
     end
   end
 
+  setup do
+    {:ok, conn} = AMQP.Connection.open("amqp://rabbitmq:5672")
+    {:ok, channel} = AMQP.Channel.open(conn)
+
+    [
+      conn: conn,
+      channel: channel
+    ]
+  end
+
   describe "consumer creation" do
-    it "connects to amqp server without errors" do
+    test "connects to amqp server without errors" do
       {response, _} = TestConsumer.start_link()
 
       assert response == :ok
     end
 
-    it "creates a queue on the amqp server" do
+    test "creates a queue on the amqp server", %{channel: channel} do
       {_, _} = TestConsumer.start_link()
 
-      :timer.sleep(1000)
+      {:ok, %{consumer_count: 1}} = AMQP.Queue.status(channel, "test-service.test-messages")
 
-      {response, 0} =
-        case System.get_env("DOCKER_RABBITMQ") do
-          "true" ->
-            System.cmd("docker", [
-              "exec",
-              System.get_env("DOCKER_RABBITMQ_CONTAINER_NAME"),
-              "rabbitmqctl",
-              "list_queues"
-            ])
+      {:ok, _} = AMQP.Queue.status(channel, "test-service.test-messages.delay.10")
 
-          _ ->
-            System.cmd("sudo", ["rabbitmqctl", "list_queues"])
-        end
-
-      assert String.contains?(response, "test-service.test-messages")
-      assert String.contains?(response, "test-service.test-messages.delay.10")
-      assert String.contains?(response, "test-service.test-messages.dead")
-    end
-
-    it "creates an exchange on the amqp server" do
-      {_, _} = TestConsumer.start_link()
-
-      :timer.sleep(1000)
-
-      {response, 0} =
-        case System.get_env("DOCKER_RABBITMQ") do
-          "true" ->
-            System.cmd("docker", [
-              "exec",
-              System.get_env("DOCKER_RABBITMQ_CONTAINER_NAME"),
-              "rabbitmqctl",
-              "list_queues"
-            ])
-
-          _ ->
-            System.cmd("sudo", ["rabbitmqctl", "list_queues"])
-        end
-
-      assert String.contains?(response, "test-service.test-messages")
+      {:ok, _} = AMQP.Queue.status(channel, "test-service.test-messages.dead")
     end
   end
 end

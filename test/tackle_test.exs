@@ -4,7 +4,7 @@ defmodule TackleTest do
   test "rapid message publishing has good performance" do
     msg = "{ \"tackle\" => \"me\" }"
 
-    {:ok, c} = Tackle.Connection.open(:publisher, "amqp://localhost")
+    {:ok, c} = Tackle.Connection.open(:publisher, "amqp://rabbitmq:5672")
     channel = Tackle.Channel.create(c)
     exchange = Tackle.Exchange.create(channel, "rapid-exchange")
 

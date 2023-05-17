@@ -1,0 +1,23 @@
+version: '3.6'
+services:
+  app:
+    container_name: ex-tackle
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        ELIXIR_VERSION: 1.14
+
+    links:
+      - rabbitmq:rabbitmq
+
+    environment:
+      AMQP_URL: "amqp://rabbitmq:5672"
+
+    volumes:
+      - ./out:/tmp/out
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit log_levels [{connection,error}]"

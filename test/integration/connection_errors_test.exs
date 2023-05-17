@@ -6,7 +6,7 @@ defmodule Tackle.ConnectionErrorsTest do
 
   defmodule AckFailConsumer do
     use Tackle.Consumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       exchange: "test-exchange",
       routing_key: "test-messages",
       service: "connection-errors-service",
@@ -29,7 +29,7 @@ defmodule Tackle.ConnectionErrorsTest do
 
   defmodule DelayFailConsumer do
     use Tackle.Consumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       exchange: "test-exchange",
       routing_key: "test-messages",
       service: "connection-errors-service",
@@ -54,7 +54,7 @@ defmodule Tackle.ConnectionErrorsTest do
 
   defmodule DeadFailConsumer do
     use Tackle.Consumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       exchange: "test-exchange",
       routing_key: "test-messages",
       service: "connection-errors-service",
@@ -77,7 +77,7 @@ defmodule Tackle.ConnectionErrorsTest do
   end
 
   @publish_options %{
-    url: "amqp://localhost",
+    url: "amqp://rabbitmq:5672",
     exchange: "test-exchange",
     routing_key: "test-messages"
   }

@@ -1,11 +1,11 @@
 defmodule Tackle.ParallelMessageHandling_1_Test do
-  use ExSpec
+  use ExUnit.Case, async: false
 
   alias Support
 
   defmodule TestConsumer do
     use Tackle.Consumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       exchange: "test-prefetch-exchange",
       routing_key: "prefetch",
       service: "prefetch-count-service"
@@ -22,7 +22,7 @@ defmodule Tackle.ParallelMessageHandling_1_Test do
   end
 
   @publish_options %{
-    url: "amqp://localhost",
+    url: "amqp://rabbitmq:5672",
     exchange: "test-prefetch-exchange",
     routing_key: "prefetch"
   }
@@ -38,7 +38,7 @@ defmodule Tackle.ParallelMessageHandling_1_Test do
   end
 
   describe "parallel message handling" do
-    it "handles messages sequentialy", context do
+    test "handles messages sequentialy", context do
       sup = context[:sup]
       Tackle.publish(sup |> inspect, @publish_options)
       Tackle.publish(sup |> inspect, @publish_options)

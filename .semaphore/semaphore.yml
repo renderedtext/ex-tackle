@@ -2,8 +2,14 @@ version: v1.0
 name: Ex-tackle tests
 agent:
   machine:
-    type: e1-standard-2
-    os_image: ubuntu1804
+    type: e2-standard-2
+    os_image: ubuntu2204
+
+global_job_config:
+  epilogue:
+    always:
+      commands:
+        - if [ -f out/results.xml ]; then test-results publish out/results.xml --name "Elixir $ELIXIR_VERSION"; fi
 
 blocks:
   - name: "Tests"
@@ -12,13 +18,11 @@ blocks:
         - name: Lint
           env_vars:
             - name: ELIXIR_VERSION
-              value: "1.12"
+              value: "1.14"
           commands:
             - checkout
-            - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
-            - make console USER=root MIX_ENV=test CMD="mix deps.unlock --check-unused"
-            - make console USER=root MIX_ENV=test CMD="mix format --check-formatted"
             - make format.check
+
         - name: Testing
           matrix:
             - env_var: ELIXIR_VERSION
@@ -36,6 +40,11 @@ blocks:
                 ]
           commands:
             - checkout
-            - make rabbitmq.run
-            - make console USER=root MIX_ENV=test CMD="mix do local.hex --force, local.rebar --force, deps.get"
             - make test
+
+after_pipeline:
+  task:
+    jobs:
+      - name: Submit Reports
+        commands:
+          - test-results gen-pipeline-report
