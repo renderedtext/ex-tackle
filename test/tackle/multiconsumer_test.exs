@@ -62,4 +62,39 @@ defmodule Tackle.MulticonsumerTest do
       opts
     )
   end
+
+  describe "MulticonsumerWithDynamicQueueName" do
+    defmodule MulticonsumerWithDynamicQueueName do
+      use Tackle.Multiconsumer,
+        url: "amqp://rabbitmq:5672",
+        service: "example_service",
+        routes: [
+          {{:topic, "exchange-2"}, "routing.key.*", :first_handler},
+          {{:topic, "exchange-2"}, "routing.#", :second_handler}
+        ],
+        queue_name: :dynamic
+
+      def first_handler(_message) do
+        send(:checker, "first handler fired")
+      end
+
+      def second_handler(message) do
+        send(:checker, "second handler fired")
+      end
+    end
+
+    test "works" do
+      Process.register(self(), :checker)
+      MulticonsumerWithDynamicQueueName.start_link([])
+
+      Tackle.publish("HELLO!",
+        url: "amqp://rabbitmq:5672",
+        exchange: {:topic, "exchange-2"},
+        routing_key: "routing.key.foo"
+      )
+
+      assert_receive "first handler fired", 1000
+      assert_receive "second handler fired", 1000
+    end
+  end
 end

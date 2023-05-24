@@ -15,6 +15,18 @@ defmodule Tackle.ConsumerTest do
     end
   end
 
+  defmodule TopicConsumerExample do
+    use Tackle.Consumer,
+      url: "amqp://rabbitmq:5672",
+      service: "example_service",
+      exchange: {:topic, "topic_exchange"},
+      routing_key: "some.routing.key"
+
+    def handle_message(message) do
+      send(:checker, message)
+    end
+  end
+
   describe "Consumer with dynamic queue name" do
     test "every queue subscribed tto a routing key receives an event" do
       Process.register(self(), :checker)

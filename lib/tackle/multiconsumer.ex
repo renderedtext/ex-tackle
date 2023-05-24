@@ -33,16 +33,23 @@ defmodule Tackle.Multiconsumer do
       Enum.map(opts[:routes], fn route ->
         {_, _, [exchange, routing_key, _]} = route
 
+        {_exchange_type, exchange_name} =
+          exchange
+          |> Tackle.Util.parse_exchange()
+
+        queue_name = opts[:queue_name]
+
         module_name =
-          Tackle.Multiconsumer.consumer_module_name(caller_module, exchange, routing_key)
+          Tackle.Multiconsumer.consumer_module_name(caller_module, exchange_name, routing_key)
 
         quote do
           defmodule unquote(module_name) do
             use Tackle.Consumer,
               url: unquote(opts[:url]),
-              service: "#{unquote(opts[:service])}.#{unquote(exchange)}",
+              service: "#{unquote(opts[:service])}.#{unquote(exchange_name)}",
               exchange: unquote(exchange),
-              routing_key: unquote(routing_key)
+              routing_key: unquote(routing_key),
+              queue_name: unquote(queue_name)
 
             def handle_message(msg) do
               {_, _, destination_fun} = unquote(route)
@@ -71,9 +78,13 @@ defmodule Tackle.Multiconsumer do
           children =
             unquote(opts[:routes])
             |> Enum.map(fn {exchange, routing_key, _} ->
+              {_exchange_type, exchange_name} =
+                exchange
+                |> Tackle.Util.parse_exchange()
+
               Tackle.Multiconsumer.consumer_module_name(
                 unquote(caller_module),
-                exchange,
+                exchange_name,
                 routing_key
               )
             end)

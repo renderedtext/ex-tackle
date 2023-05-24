@@ -10,9 +10,9 @@ defmodule Tackle.Consumer do
     url = options[:url]
 
     exchange = options[:exchange]
+
     routing_key = options[:routing_key]
     service = options[:service]
-    exchange_type = options[:exchange_type] || :direct
 
     retry_delay = options[:retry_delay] || 10
     retry_limit = options[:retry_limit] || 10
@@ -49,7 +49,10 @@ defmodule Tackle.Consumer do
         retry_limit = unquote(retry_limit)
         prefetch_count = unquote(prefetch_count)
         connection_id = unquote(connection_id)
-        exchange_type = unquote(exchange_type)
+
+        {exchange_name, exchange_type} =
+          unquote(exchange)
+          |> Tackle.Util.parse_exchange()
 
         {:ok, connection} = Tackle.Connection.open(connection_id, url)
         # Get notifications when the connection goes down
