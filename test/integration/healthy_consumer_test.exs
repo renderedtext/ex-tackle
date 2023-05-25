@@ -7,9 +7,9 @@ defmodule Tackle.HealthyConsumerTest do
   defmodule TestConsumer do
     use Tackle.Consumer,
       url: "amqp://rabbitmq:5672",
-      exchange: "test-exchange",
+      exchange: "HealthyConsumerTest",
       routing_key: "health",
-      service: "healthy-service"
+      service: "Tackle"
 
     def handle_message(message) do
       message |> MessageTrace.save("healthy-service")
@@ -18,7 +18,7 @@ defmodule Tackle.HealthyConsumerTest do
 
   @publish_options %{
     url: "amqp://rabbitmq:5672",
-    exchange: "test-exchange",
+    exchange: "HealthyConsumerTest",
     routing_key: "health"
   }
 

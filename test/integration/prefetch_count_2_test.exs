@@ -31,9 +31,7 @@ defmodule Tackle.ParallelMessageHandling_2_Test do
   setup do
     {:ok, _} = TestConsumer.start_link()
 
-    {:ok, sup} =
-      Task.Supervisor.start_link()
-      |> IO.inspect()
+    {:ok, sup} = Task.Supervisor.start_link()
 
     :timer.sleep(1000)
 

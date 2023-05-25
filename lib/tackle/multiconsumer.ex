@@ -37,7 +37,10 @@ defmodule Tackle.Multiconsumer do
           exchange
           |> Tackle.Util.parse_exchange()
 
-        queue_name = opts[:queue_name]
+        queue = opts[:queue]
+        service = opts[:service]
+        queue_opts = opts[:queue_opts] || []
+        exchange_opts = opts[:exchange_opts] || []
 
         module_name =
           Tackle.Multiconsumer.consumer_module_name(caller_module, exchange_name, routing_key)
@@ -46,10 +49,12 @@ defmodule Tackle.Multiconsumer do
           defmodule unquote(module_name) do
             use Tackle.Consumer,
               url: unquote(opts[:url]),
-              service: "#{unquote(opts[:service])}.#{unquote(exchange_name)}",
+              service: unquote(service),
               exchange: unquote(exchange),
               routing_key: unquote(routing_key),
-              queue_name: unquote(queue_name)
+              queue: unquote(queue),
+              queue_opts: unquote(queue_opts),
+              exchange_opts: unquote(exchange_opts)
 
             def handle_message(msg) do
               {_, _, destination_fun} = unquote(route)

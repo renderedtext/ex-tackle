@@ -20,7 +20,10 @@ defmodule Tackle.Consumer do
     prefetch_count = options[:prefetch_count] || @prefetch_count
 
     connection_id = options[:connection_id] || :default
-    queue_name = options[:queue_name]
+    queue = options[:queue]
+
+    queue_opts = options[:queue_opts] || []
+    exchange_opts = options[:exchange_opts] || []
 
     quote do
       @behaviour Tackle.Consumer.Behaviour
@@ -49,9 +52,13 @@ defmodule Tackle.Consumer do
         retry_limit = unquote(retry_limit)
         prefetch_count = unquote(prefetch_count)
         connection_id = unquote(connection_id)
+        exchange = unquote(exchange)
+        exchange_opts = unquote(exchange_opts)
+        queue = unquote(queue)
+        queue_opts = unquote(queue_opts)
 
-        {exchange_name, exchange_type} =
-          unquote(exchange)
+        {exchange_type, exchange_name} =
+          exchange
           |> Tackle.Util.parse_exchange()
 
         {:ok, connection} = Tackle.Connection.open(connection_id, url)
@@ -59,41 +66,47 @@ defmodule Tackle.Consumer do
         Process.monitor(connection.pid)
         channel = Tackle.Channel.create(connection, prefetch_count)
 
-        remote_exchange = unquote(exchange)
+        service_exchange_name = "#{service}.#{routing_key}"
 
         service_exchange =
           Tackle.Exchange.create(
             channel,
-            service,
-            routing_key: routing_key,
-            type: exchange_type
+            {exchange_type, service_exchange_name},
+            exchange_opts
           )
 
         Tackle.Exchange.bind_to_remote(
           channel,
-          service_exchange,
-          remote_exchange,
-          routing_key
+          service_exchange_name,
+          exchange,
+          routing_key,
+          exchange_opts
         )
 
-        queue_name =
-          unquote(queue_name)
+        queue =
+          queue
           |> case do
-            nil -> service_exchange
+            nil -> service_exchange_name
             :dynamic -> unique_name(20)
             name -> name
           end
 
-        queue = Tackle.Queue.create_queue(channel, queue_name)
-        dead_queue = Tackle.Queue.create_dead_queue(channel, queue_name)
+        main_queue = Tackle.Queue.create_queue(channel, queue, queue_opts)
+        dead_queue = Tackle.Queue.create_dead_queue(channel, queue, queue_opts)
 
         delay_queue =
-          Tackle.Queue.create_delay_queue(channel, queue_name, routing_key, retry_delay)
+          Tackle.Queue.create_delay_queue(
+            channel,
+            queue,
+            routing_key,
+            retry_delay,
+            queue_opts
+          )
 
         Tackle.Exchange.bind_to_queue(
           channel,
           service_exchange,
-          queue,
+          main_queue,
           routing_key
         )
 

@@ -8,7 +8,7 @@ defmodule Tackle.ConsumerTest do
       service: "example_service",
       exchange: "some_exchange",
       routing_key: "some.routing.key",
-      queue_name: :dynamic
+      queue: :dynamic
 
     def handle_message(message) do
       send(:checker, message)

@@ -7,9 +7,9 @@ defmodule Tackle.RepublishTest do
   defmodule BrokenConsumer do
     use Tackle.Consumer,
       url: "amqp://rabbitmq:5672",
-      exchange: "test-exchange",
+      exchange: "RepublishTest",
       routing_key: "test-messages",
-      service: "republish-service",
+      service: "Tackle",
       retry_delay: 1,
       retry_limit: 1
 
@@ -22,9 +22,9 @@ defmodule Tackle.RepublishTest do
   defmodule FixedConsumer do
     use Tackle.Consumer,
       url: "amqp://rabbitmq:5672",
-      exchange: "test-exchange",
+      exchange: "RepublishTest",
       routing_key: "test-messages",
-      service: "republish-service",
+      service: "Tackle",
       retry_delay: 1,
       retry_limit: 3
 
@@ -35,16 +35,16 @@ defmodule Tackle.RepublishTest do
 
   @publish_options %{
     url: "amqp://rabbitmq:5672",
-    exchange: "test-exchange",
+    exchange: "RepublishTest",
     routing_key: "test-messages"
   }
 
-  @dead_queue "republish-service.test-messages.dead"
+  @dead_queue "Tackle.test-messages.dead"
 
   setup do
-    Support.create_exchange("test-exchange")
+    Support.create_exchange("Tackle")
 
-    Support.purge_queue("republish-service.test-messages")
+    Support.purge_queue("Tackle.test-messages")
   end
 
   describe "republishing" do
@@ -87,7 +87,7 @@ defmodule Tackle.RepublishTest do
       Tackle.republish(%{
         url: "amqp://rabbitmq:5672",
         queue: @dead_queue,
-        exchange: "test-exchange",
+        exchange: "RepublishTest",
         routing_key: "test-messages",
         count: 2
       })

@@ -57,5 +57,5 @@ defmodule Support do
   end
 end
 
-ExUnit.configure(formatters: [JUnitFormatter, ExUnit.CLIFormatter], caputre_log: true)
+ExUnit.configure(formatters: [JUnitFormatter, ExUnit.CLIFormatter], capture_log: true)
 ExUnit.start()

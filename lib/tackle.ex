@@ -18,6 +18,7 @@ defmodule Tackle do
     url = options[:url]
     exchange = options[:exchange]
     routing_key = options[:routing_key]
+    exchange_opts = options[:exchange_opts] || []
 
     {exchange_type, exchange_name} =
       exchange
@@ -28,7 +29,7 @@ defmodule Tackle do
     channel = Tackle.Channel.create(connection)
 
     Logger.debug("Declaring an exchange '#{exchange_name}' with type '#{exchange_type}'")
-    Tackle.Exchange.create(channel, exchange)
+    Tackle.Exchange.create(channel, exchange, exchange_opts)
 
     Tackle.Exchange.publish(channel, exchange_name, message, routing_key)
 
