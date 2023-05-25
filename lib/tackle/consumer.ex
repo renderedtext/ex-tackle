@@ -33,10 +33,11 @@ defmodule Tackle.Consumer do
 
       def start_link(opts \\ []) do
         process_name = Keyword.get(opts, :process_name, __MODULE__)
-        GenServer.start_link(__MODULE__, [], name: process_name)
+        GenServer.start_link(__MODULE__, [process_name: process_name], name: process_name)
       end
 
-      def init(_) do
+      def init(opts) do
+        Logger.info("Starting consumer #{inspect(opts[:process_name])}")
         url = unquote(url)
         service_name_prefix = Application.get_env(:tackle, :service_name_prefix)
 
@@ -65,15 +66,15 @@ defmodule Tackle.Consumer do
         # Get notifications when the connection goes down
         Process.monitor(connection.pid)
         channel = Tackle.Channel.create(connection, prefetch_count)
+        Process.monitor(channel.pid)
 
         service_exchange_name = "#{service}.#{routing_key}"
 
-        service_exchange =
-          Tackle.Exchange.create(
-            channel,
-            {exchange_type, service_exchange_name},
-            exchange_opts
-          )
+        Tackle.Exchange.create(
+          channel,
+          {exchange_type, service_exchange_name},
+          exchange_opts
+        )
 
         Tackle.Exchange.bind_to_remote(
           channel,
@@ -97,6 +98,7 @@ defmodule Tackle.Consumer do
         delay_queue =
           Tackle.Queue.create_delay_queue(
             channel,
+            service_exchange_name,
             queue,
             routing_key,
             retry_delay,
@@ -105,7 +107,7 @@ defmodule Tackle.Consumer do
 
         Tackle.Exchange.bind_to_queue(
           channel,
-          service_exchange,
+          service_exchange_name,
           main_queue,
           routing_key
         )
@@ -171,7 +173,7 @@ defmodule Tackle.Consumer do
         ]
 
         if retry_count < state.retry_limit do
-          Logger.info("Sending message to a delay queue")
+          Logger.info("Sending message to a delay queue: #{state.delay_queue}")
 
           Tackle.DelayedRetry.publish(
             state.url,
@@ -180,7 +182,7 @@ defmodule Tackle.Consumer do
             options
           )
         else
-          Logger.info("Sending message to a dead messages queue")
+          Logger.info("Sending message to a dead messages queue: #{state.dead_queue}")
 
           Tackle.DelayedRetry.publish(
             state.url,
@@ -194,6 +196,11 @@ defmodule Tackle.Consumer do
       defp unique_name(length) do
         :crypto.strong_rand_bytes(length)
         |> Base.encode32(padding: false)
+      end
+
+      def handle_info(message, state) do
+        Logger.info("Received unknown message: #{inspect(message)}")
+        {:noreply, state}
       end
     end
   end

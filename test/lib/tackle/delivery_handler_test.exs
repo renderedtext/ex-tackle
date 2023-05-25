@@ -3,6 +3,8 @@ defmodule Tackle.DeliveryHandlerTest do
 
   # This is needed for delivery_handler to be generated.
   defmodule TestConsumer do
+    require Logger
+
     use Tackle.Consumer,
       url: "amqp://rabbitmq:5672",
       exchange: "test-exchange",
@@ -10,7 +12,7 @@ defmodule Tackle.DeliveryHandlerTest do
       service: "test-service"
 
     def handle_message(_) do
-      IO.puts("here")
+      Logger.info("Received message")
     end
   end
 

@@ -12,10 +12,4 @@ if Mix.env() == :test do
     include_filename?: true,
     include_file_line?: true,
     automatic_create_dir?: true
-
-  config :lager,
-    error_logger_redirect: false,
-    handlers: [level: :critical]
-
-  config :logger, handle_otp_reports: false
 end

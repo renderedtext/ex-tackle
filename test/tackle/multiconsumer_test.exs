@@ -2,6 +2,8 @@ defmodule Tackle.MulticonsumerTest do
   use ExUnit.Case, async: false
 
   defmodule MulticonsumerExample do
+    require Logger
+
     use Tackle.Multiconsumer,
       url: "amqp://rabbitmq:5672",
       service: "example_service",
@@ -10,11 +12,13 @@ defmodule Tackle.MulticonsumerTest do
       ]
 
     def handler(_message) do
-      IO.puts("Handled!")
+      Logger.info("Handled!")
     end
   end
 
   defmodule MulticonsumerExampleBeta do
+    require Logger
+
     use Tackle.Multiconsumer,
       url: "amqp://rabbitmq:5672",
       service: "#{System.get_env("A")}.example_beta_service",
@@ -23,7 +27,7 @@ defmodule Tackle.MulticonsumerTest do
       ]
 
     def handler(_message) do
-      IO.puts("Handled!")
+      Logger.info("Handled!")
     end
   end
 
@@ -63,38 +67,79 @@ defmodule Tackle.MulticonsumerTest do
     )
   end
 
-  describe "MulticonsumerWithDynamicQueueName" do
+  describe "MulticonsumerWithMultipleHandlers and dynamic queue names" do
     defmodule MulticonsumerWithDynamicQueueName do
       use Tackle.Multiconsumer,
         url: "amqp://rabbitmq:5672",
-        service: "example_service",
+        service: "MulticonsumerWithMultipleHandlersService",
         routes: [
-          {{:topic, "exchange-2"}, "routing.key.*", :first_handler},
-          {{:topic, "exchange-2"}, "routing.#", :second_handler}
+          {"MulticonsumerWithMultipleHandlersExchange", "routing.key1", :first_handler},
+          {"MulticonsumerWithMultipleHandlersExchange", "routing.key2", :second_handler},
+          {"MulticonsumerWithMultipleHandlersExchange", "routing.key3", :third_handler}
         ],
-        queue_name: :dynamic
+        queue: :dynamic,
+        queue_opts: [
+          auto_delete: true,
+          exclusive: true
+        ]
 
       def first_handler(_message) do
         send(:checker, "first handler fired")
       end
 
-      def second_handler(message) do
+      def second_handler(_message) do
         send(:checker, "second handler fired")
+      end
+
+      def third_handler(_message) do
+        send(:checker, "third handler fired")
       end
     end
 
-    test "works" do
+    test "works like a broadcast" do
       Process.register(self(), :checker)
-      MulticonsumerWithDynamicQueueName.start_link([])
+
+      {:ok, _pid} =
+        MulticonsumerWithDynamicQueueName.start_link(process_name: {:global, make_ref()})
+
+      {:ok, _pid} =
+        MulticonsumerWithDynamicQueueName.start_link(process_name: {:global, make_ref()})
 
       Tackle.publish("HELLO!",
         url: "amqp://rabbitmq:5672",
-        exchange: {:topic, "exchange-2"},
-        routing_key: "routing.key.foo"
+        exchange: "MulticonsumerWithMultipleHandlersExchange",
+        routing_key: "routing.key1"
       )
 
       assert_receive "first handler fired", 1000
+      assert_receive "first handler fired", 1000
+      refute_receive "first handler fired", 1000
+      refute_receive "second handler fired", 1000
+      refute_receive "third handler fired", 1000
+
+      Tackle.publish("HELLO!",
+        url: "amqp://rabbitmq:5672",
+        exchange: "MulticonsumerWithMultipleHandlersExchange",
+        routing_key: "routing.key2"
+      )
+
       assert_receive "second handler fired", 1000
+      assert_receive "second handler fired", 1000
+      refute_receive "first handler fired", 1000
+      refute_receive "second handler fired", 1000
+      refute_receive "third handler fired", 1000
+
+      Tackle.publish("HELLO!",
+        url: "amqp://rabbitmq:5672",
+        exchange: "MulticonsumerWithMultipleHandlersExchange",
+        routing_key: "routing.key3"
+      )
+
+      assert_receive "third handler fired", 1000
+      assert_receive "third handler fired", 1000
+      refute_receive "first handler fired", 1000
+      refute_receive "second handler fired", 1000
+      refute_receive "third handler fired", 1000
     end
   end
 end

@@ -48,7 +48,7 @@ defmodule Tackle.ConnectionErrorsTest do
       :timer.sleep(1000)
 
       # exception
-      :a + 1
+      raise "oops"
     end
   end
 
@@ -72,7 +72,7 @@ defmodule Tackle.ConnectionErrorsTest do
       :timer.sleep(1000)
 
       # exception
-      :a + 1
+      raise "oops"
     end
   end
 

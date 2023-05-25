@@ -14,7 +14,7 @@ defmodule Tackle.DeadQueueTest do
 
     def handle_message(_message) do
       # exception
-      :a + 1
+      raise "oops"
     end
   end
 

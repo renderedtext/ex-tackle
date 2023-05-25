@@ -20,7 +20,7 @@ defmodule Tackle do
     routing_key = options[:routing_key]
     exchange_opts = options[:exchange_opts] || []
 
-    {exchange_type, exchange_name} =
+    {_exchange_type, exchange_name} =
       exchange
       |> Tackle.Util.parse_exchange()
 
@@ -28,12 +28,13 @@ defmodule Tackle do
     {:ok, connection} = AMQP.Connection.open(url)
     channel = Tackle.Channel.create(connection)
 
-    Logger.debug("Declaring an exchange '#{exchange_name}' with type '#{exchange_type}'")
-    Tackle.Exchange.create(channel, exchange, exchange_opts)
-
-    Tackle.Exchange.publish(channel, exchange_name, message, routing_key)
-
-    AMQP.Connection.close(connection)
+    try do
+      Tackle.Exchange.create(channel, exchange, exchange_opts)
+      Tackle.Exchange.publish(channel, exchange_name, message, routing_key)
+    after
+      AMQP.Channel.close(channel)
+      AMQP.Connection.close(connection)
+    end
   end
 
   def republish(options) do

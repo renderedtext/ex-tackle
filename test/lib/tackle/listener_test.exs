@@ -2,6 +2,8 @@ defmodule Tackle.ListenerTest do
   use ExUnit.Case, async: false
 
   defmodule TestConsumer do
+    require Logger
+
     use Tackle.Consumer,
       url: "amqp://rabbitmq:5672",
       exchange: "test-exchange",
@@ -9,7 +11,7 @@ defmodule Tackle.ListenerTest do
       service: "test-service"
 
     def handle_message(_) do
-      IO.puts("here")
+      Logger.info("Received message")
     end
   end
 
@@ -24,14 +26,10 @@ defmodule Tackle.ListenerTest do
   end
 
   describe "consumer creation" do
-    test "connects to amqp server without errors" do
+    test "creates a queue on the amqp server", %{channel: channel} do
       {response, _} = TestConsumer.start_link()
 
       assert response == :ok
-    end
-
-    test "creates a queue on the amqp server", %{channel: channel} do
-      {_, _} = TestConsumer.start_link()
 
       {:ok, %{consumer_count: 1}} = AMQP.Queue.status(channel, "test-service.test-messages")
 

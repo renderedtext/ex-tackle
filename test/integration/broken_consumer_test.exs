@@ -17,7 +17,7 @@ defmodule Tackle.BrokenConsumerTest do
       message |> MessageTrace.save("broken-service")
 
       # exception
-      :a + 1
+      raise "oops"
     end
   end
 

@@ -6,9 +6,9 @@ defmodule Tackle.ParallelMessageHandling_2_Test do
   defmodule TestConsumer do
     use Tackle.Consumer,
       url: "amqp://rabbitmq:5672",
-      exchange: "test-prefetch-2-exchange",
+      exchange: "ParallelMessageHandling_2_Test",
       routing_key: "prefetch",
-      service: "prefetch-count-service",
+      service: "Prefetch2",
       prefetch_count: 2
 
     def handle_message(message) do
@@ -24,7 +24,7 @@ defmodule Tackle.ParallelMessageHandling_2_Test do
 
   @publish_options %{
     url: "amqp://rabbitmq:5672",
-    exchange: "test-prefetch-2-exchange",
+    exchange: "ParallelMessageHandling_2_Test",
     routing_key: "prefetch"
   }
 

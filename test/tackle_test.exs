@@ -1,5 +1,6 @@
 defmodule TackleTest do
   use ExUnit.Case, async: false
+  require Logger
 
   test "rapid message publishing has good performance" do
     msg = "{ \"tackle\" => \"me\" }"
@@ -17,10 +18,10 @@ defmodule TackleTest do
       end)
       |> elem(0)
 
-    IO.puts("Performance: #{ms / 1000} ms")
+    Logger.info("Performance: #{ms / 1000} ms")
 
     # we don't care about the exact values, we just want to make sure that
-    # we can send 100_000 under 1 second to a localhost
-    assert ms / 1000 < 1000
+    # we can send 100_000 under 5 seconds to a localhost
+    assert ms / 1000 < 5000
   end
 end

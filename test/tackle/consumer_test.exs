@@ -1,26 +1,17 @@
 defmodule Tackle.ConsumerTest do
   use ExUnit.Case, async: false
-  import ExUnit.CaptureLog
 
   defmodule ConsumerExample do
     use Tackle.Consumer,
       url: "amqp://rabbitmq:5672",
-      service: "example_service",
-      exchange: "some_exchange",
+      service: "ConsumerTestService",
+      exchange: "ConsumerTestExchange",
       routing_key: "some.routing.key",
-      queue: :dynamic
-
-    def handle_message(message) do
-      send(:checker, message)
-    end
-  end
-
-  defmodule TopicConsumerExample do
-    use Tackle.Consumer,
-      url: "amqp://rabbitmq:5672",
-      service: "example_service",
-      exchange: {:topic, "topic_exchange"},
-      routing_key: "some.routing.key"
+      queue: :dynamic,
+      queue_opts: [
+        auto_delete: true,
+        exclusive: true
+      ]
 
     def handle_message(message) do
       send(:checker, message)
@@ -36,7 +27,7 @@ defmodule Tackle.ConsumerTest do
 
       Tackle.publish("HELLO WORLD!",
         url: "amqp://rabbitmq:5672",
-        exchange: "some_exchange",
+        exchange: "ConsumerTestExchange",
         routing_key: "some.routing.key"
       )
 

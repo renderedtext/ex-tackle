@@ -28,19 +28,18 @@ blocks:
             - env_var: ELIXIR_VERSION
               values:
                 [
-                  "1.6",
-                  "1.7",
-                  "1.8",
-                  "1.9",
-                  "1.10",
                   "1.11",
                   "1.12",
                   "1.13",
                   "1.14.0",
                 ]
+            - env_var: SEMAPHORE_JOB_INDEX
+              values: ["1", "2", "3", "4", "5"]
+            - env_var: SEMAPHORE_JOB_COUNT
+              values: ["5"]
           commands:
             - checkout
-            - make test
+            - make test MIX_TEST_PARTITION=$SEMAPHORE_JOB_INDEX MIX_TEST_PARTITIONS=$SEMAPHORE_JOB_COUNT
 
 after_pipeline:
   task:

@@ -31,6 +31,10 @@ defmodule Tackle.Exchange do
   end
 
   def publish(channel, exchange, message, routing_key) do
+    Logger.debug(
+      "Publishing to exchange '#{exchange}' message '#{inspect(message)}' with routing key '#{routing_key}'"
+    )
+
     AMQP.Basic.publish(
       channel,
       exchange,

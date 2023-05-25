@@ -19,13 +19,20 @@ defmodule Tackle.Queue do
     queue_name
   end
 
-  def create_delay_queue(channel, queue_name, routing_key, delay, opts \\ []) do
+  def create_delay_queue(
+        channel,
+        dead_letter_exchange_name,
+        queue_name,
+        routing_key,
+        delay,
+        opts \\ []
+      ) do
     delay_queue_name = "#{queue_name}.delay.#{delay}"
 
     defaults = [
       durable: true,
       arguments: [
-        {"x-dead-letter-exchange", :longstr, queue_name},
+        {"x-dead-letter-exchange", :longstr, dead_letter_exchange_name},
         {"x-dead-letter-routing-key", :longstr, routing_key},
         {"x-message-ttl", :long, delay * 1000}
       ]

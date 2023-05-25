@@ -5,6 +5,8 @@ defmodule Tackle.MultipleServicesTest do
   alias Support.MessageTrace
 
   defmodule ServiceA do
+    require Logger
+
     use Tackle.Consumer,
       url: "amqp://rabbitmq:5672",
       exchange: "test-exchange",
@@ -14,7 +16,7 @@ defmodule Tackle.MultipleServicesTest do
       retry_limit: 3
 
     def handle_message(message) do
-      IO.puts("ServiceA: received '#{message}'")
+      Logger.info("ServiceA: received '#{message}'")
 
       message |> MessageTrace.save("serviceA")
     end
@@ -22,6 +24,8 @@ defmodule Tackle.MultipleServicesTest do
 
   # broken service
   defmodule ServiceB do
+    require Logger
+
     use Tackle.Consumer,
       url: "amqp://rabbitmq:5672",
       exchange: "test-exchange",
@@ -31,7 +35,7 @@ defmodule Tackle.MultipleServicesTest do
       retry_limit: 3
 
     def handle_message(message) do
-      IO.puts("ServiceB: received '#{message}'")
+      Logger.info("ServiceB: received '#{message}'")
 
       message |> MessageTrace.save("serviceB")
 

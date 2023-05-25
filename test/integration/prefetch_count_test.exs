@@ -6,9 +6,9 @@ defmodule Tackle.ParallelMessageHandling_1_Test do
   defmodule TestConsumer do
     use Tackle.Consumer,
       url: "amqp://rabbitmq:5672",
-      exchange: "test-prefetch-exchange",
+      exchange: "ParallelMessageHandling_1_Test",
       routing_key: "prefetch",
-      service: "prefetch-count-service"
+      service: "Prefetch1"
 
     def handle_message(message) do
       "#PID" <> spid = message
@@ -23,7 +23,7 @@ defmodule Tackle.ParallelMessageHandling_1_Test do
 
   @publish_options %{
     url: "amqp://rabbitmq:5672",
-    exchange: "test-prefetch-exchange",
+    exchange: "ParallelMessageHandling_1_Test",
     routing_key: "prefetch"
   }
 
