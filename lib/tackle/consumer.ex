@@ -25,6 +25,8 @@ defmodule Tackle.Consumer do
     queue_opts = options[:queue_opts] || []
     exchange_opts = options[:exchange_opts] || []
 
+    create_dead_letter_queue? = Keyword.get(options, :dead_letter_queue, true)
+
     quote do
       @behaviour Tackle.Consumer.Behaviour
 
@@ -57,6 +59,7 @@ defmodule Tackle.Consumer do
         exchange_opts = unquote(exchange_opts)
         queue = unquote(queue)
         queue_opts = unquote(queue_opts)
+        create_dead_letter_queue? = unquote(create_dead_letter_queue?)
 
         {exchange_type, exchange_name} =
           exchange
@@ -93,17 +96,27 @@ defmodule Tackle.Consumer do
           end
 
         main_queue = Tackle.Queue.create_queue(channel, queue, queue_opts)
-        dead_queue = Tackle.Queue.create_dead_queue(channel, queue, queue_opts)
+
+        dead_queue =
+          if create_dead_letter_queue? do
+            Tackle.Queue.create_dead_queue(channel, queue, queue_opts)
+          else
+            nil
+          end
 
         delay_queue =
-          Tackle.Queue.create_delay_queue(
-            channel,
-            service_exchange_name,
-            queue,
-            routing_key,
-            retry_delay,
-            queue_opts
-          )
+          if create_dead_letter_queue? do
+            Tackle.Queue.create_delay_queue(
+              channel,
+              service_exchange_name,
+              queue,
+              routing_key,
+              retry_delay,
+              queue_opts
+            )
+          else
+            nil
+          end
 
         Tackle.Exchange.bind_to_queue(
           channel,
@@ -117,6 +130,7 @@ defmodule Tackle.Consumer do
         state = %{
           url: url,
           channel: channel,
+          has_dead_letter?: create_dead_letter_queue?,
           delay_queue: delay_queue,
           dead_queue: dead_queue,
           retry_limit: retry_limit
@@ -137,7 +151,11 @@ defmodule Tackle.Consumer do
 
         error_callback = fn reason ->
           Logger.error("Consumption failed: #{inspect(reason)}; payload: #{inspect(payload)}")
-          retry(state, payload, headers)
+
+          if state.has_dead_letter? do
+            retry(state, payload, headers)
+          end
+
           :ok = AMQP.Basic.nack(state.channel, tag, multiple: false, requeue: false)
         end
 
