@@ -39,6 +39,7 @@ defmodule Tackle.Multiconsumer do
 
         queue = opts[:queue]
         service = opts[:service]
+        connection_id = opts[:connection_id]
         queue_opts = opts[:queue_opts] || []
         exchange_opts = opts[:exchange_opts] || []
         dead_letter_queue = Keyword.get(opts, :dead_letter_queue, true)
@@ -56,7 +57,8 @@ defmodule Tackle.Multiconsumer do
               queue: unquote(queue),
               queue_opts: unquote(queue_opts),
               exchange_opts: unquote(exchange_opts),
-              dead_letter_queue: unquote(dead_letter_queue)
+              dead_letter_queue: unquote(dead_letter_queue),
+              connection_id: unquote(connection_id)
 
             def handle_message(msg) do
               {_, _, destination_fun} = unquote(route)
