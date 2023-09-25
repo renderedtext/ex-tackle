@@ -1,9 +1,9 @@
 defmodule Tackle.SharedConnection.Test do
-  use ExSpec
+  use ExUnit.Case, async: false
 
   defmodule TestConsumer1 do
     use Tackle.Consumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       exchange: "test-multiple-channels-exchange-1",
       routing_key: "multiple-channels",
       service: "multiple-channels-service-1",
@@ -16,7 +16,7 @@ defmodule Tackle.SharedConnection.Test do
 
   defmodule TestConsumer2 do
     use Tackle.Consumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       exchange: "test-multiple-channels-exchange-2",
       routing_key: "multiple-channels",
       service: "multiple-channels-service-2",
@@ -34,13 +34,13 @@ defmodule Tackle.SharedConnection.Test do
   end
 
   @publish_options_1 %{
-    url: "amqp://localhost",
+    url: "amqp://rabbitmq:5672",
     exchange: "test-multiple-channels-exchange-1",
     routing_key: "multiple-channels"
   }
 
   @publish_options_2 %{
-    url: "amqp://localhost",
+    url: "amqp://rabbitmq:5672",
     exchange: "test-multiple-channels-exchange-2",
     routing_key: "multiple-channels"
   }
@@ -52,7 +52,7 @@ defmodule Tackle.SharedConnection.Test do
   end
 
   describe "shared connection" do
-    it "- reopen consumers", _context do
+    test "- reopen consumers", _context do
       {:ok, c1} = TestConsumer1.start_link()
       {:ok, c2} = TestConsumer2.start_link()
 

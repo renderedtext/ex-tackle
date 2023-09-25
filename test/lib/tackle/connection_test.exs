@@ -25,7 +25,7 @@ defmodule Tackle.ConnectionTest do
   end
 
   def get_connection_pid(name) do
-    Tackle.Connection.open(name, []) |> get_pid
+    Tackle.Connection.open(name, "amqp://rabbitmq:5672") |> get_pid
   end
 
   def get_pid({:ok, connection}) do

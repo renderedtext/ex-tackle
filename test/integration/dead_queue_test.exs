@@ -1,11 +1,11 @@
 defmodule Tackle.DeadQueueTest do
-  use ExSpec
+  use ExUnit.Case, async: false
 
   alias Support
 
   defmodule DeadConsumer do
     use Tackle.Consumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       exchange: "test-exchange",
       routing_key: "test-messages",
       service: "dead-service",
@@ -14,12 +14,12 @@ defmodule Tackle.DeadQueueTest do
 
     def handle_message(_message) do
       # exception
-      :a + 1
+      raise "oops"
     end
   end
 
   @publish_options %{
-    url: "amqp://localhost",
+    url: "amqp://rabbitmq:5672",
     exchange: "test-exchange",
     routing_key: "test-messages"
   }
@@ -36,7 +36,7 @@ defmodule Tackle.DeadQueueTest do
   end
 
   describe "broken consumer" do
-    it "puts the messages o dead queue after failures" do
+    test "puts the messages o dead queue after failures" do
       assert Support.queue_status(@dead_queue).message_count == 0
 
       Tackle.publish("Hi!", @publish_options)

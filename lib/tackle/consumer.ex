@@ -10,9 +10,9 @@ defmodule Tackle.Consumer do
     url = options[:url]
 
     exchange = options[:exchange]
+
     routing_key = options[:routing_key]
     service = options[:service]
-    exchange_type = options[:exchange_type] || :direct
 
     retry_delay = options[:retry_delay] || 10
     retry_limit = options[:retry_limit] || 10
@@ -20,6 +20,12 @@ defmodule Tackle.Consumer do
     prefetch_count = options[:prefetch_count] || @prefetch_count
 
     connection_id = options[:connection_id] || :default
+    queue = options[:queue]
+
+    queue_opts = options[:queue_opts] || []
+    exchange_opts = options[:exchange_opts] || []
+
+    create_dead_letter_queue? = Keyword.get(options, :dead_letter_queue, true)
 
     quote do
       @behaviour Tackle.Consumer.Behaviour
@@ -27,11 +33,13 @@ defmodule Tackle.Consumer do
       require Logger
       use GenServer
 
-      def start_link(_ \\ nil) do
-        GenServer.start_link(__MODULE__, {}, name: __MODULE__)
+      def start_link(opts \\ []) do
+        process_name = Keyword.get(opts, :process_name, __MODULE__)
+        GenServer.start_link(__MODULE__, [process_name: process_name], name: process_name)
       end
 
-      def init({}) do
+      def init(opts) do
+        Logger.info("Starting consumer #{inspect(opts[:process_name])}")
         url = unquote(url)
         service_name_prefix = Application.get_env(:tackle, :service_name_prefix)
 
@@ -47,40 +55,73 @@ defmodule Tackle.Consumer do
         retry_limit = unquote(retry_limit)
         prefetch_count = unquote(prefetch_count)
         connection_id = unquote(connection_id)
-        exchange_type = unquote(exchange_type)
+        exchange = unquote(exchange)
+        exchange_opts = unquote(exchange_opts)
+        queue = unquote(queue)
+        queue_opts = unquote(queue_opts)
+        create_dead_letter_queue? = unquote(create_dead_letter_queue?)
+
+        {exchange_type, exchange_name} =
+          exchange
+          |> Tackle.Util.parse_exchange()
 
         {:ok, connection} = Tackle.Connection.open(connection_id, url)
         # Get notifications when the connection goes down
         Process.monitor(connection.pid)
         channel = Tackle.Channel.create(connection, prefetch_count)
+        Process.monitor(channel.pid)
 
-        remote_exchange = unquote(exchange)
+        service_exchange_name = "#{service}.#{routing_key}"
 
-        service_exchange =
-          Tackle.Exchange.create(
-            channel,
-            service,
-            routing_key: routing_key,
-            type: exchange_type
-          )
+        Tackle.Exchange.create(
+          channel,
+          {exchange_type, service_exchange_name},
+          exchange_opts
+        )
 
         Tackle.Exchange.bind_to_remote(
           channel,
-          service_exchange,
-          remote_exchange,
-          routing_key
+          service_exchange_name,
+          exchange,
+          routing_key,
+          exchange_opts
         )
 
-        queue = Tackle.Queue.create_queue(channel, service_exchange)
-        dead_queue = Tackle.Queue.create_dead_queue(channel, service_exchange)
+        queue =
+          queue
+          |> case do
+            nil -> service_exchange_name
+            :dynamic -> unique_name(20)
+            name -> name
+          end
+
+        main_queue = Tackle.Queue.create_queue(channel, queue, queue_opts)
+
+        dead_queue =
+          if create_dead_letter_queue? do
+            Tackle.Queue.create_dead_queue(channel, queue, queue_opts)
+          else
+            nil
+          end
 
         delay_queue =
-          Tackle.Queue.create_delay_queue(channel, service_exchange, routing_key, retry_delay)
+          if create_dead_letter_queue? do
+            Tackle.Queue.create_delay_queue(
+              channel,
+              service_exchange_name,
+              queue,
+              routing_key,
+              retry_delay,
+              queue_opts
+            )
+          else
+            nil
+          end
 
         Tackle.Exchange.bind_to_queue(
           channel,
-          service_exchange,
-          queue,
+          service_exchange_name,
+          main_queue,
           routing_key
         )
 
@@ -89,6 +130,7 @@ defmodule Tackle.Consumer do
         state = %{
           url: url,
           channel: channel,
+          has_dead_letter?: create_dead_letter_queue?,
           delay_queue: delay_queue,
           dead_queue: dead_queue,
           retry_limit: retry_limit
@@ -109,7 +151,11 @@ defmodule Tackle.Consumer do
 
         error_callback = fn reason ->
           Logger.error("Consumption failed: #{inspect(reason)}; payload: #{inspect(payload)}")
-          retry(state, payload, headers)
+
+          if state.has_dead_letter? do
+            retry(state, payload, headers)
+          end
+
           :ok = AMQP.Basic.nack(state.channel, tag, multiple: false, requeue: false)
         end
 
@@ -145,7 +191,7 @@ defmodule Tackle.Consumer do
         ]
 
         if retry_count < state.retry_limit do
-          Logger.info("Sending message to a delay queue")
+          Logger.info("Sending message to a delay queue: #{state.delay_queue}")
 
           Tackle.DelayedRetry.publish(
             state.url,
@@ -154,7 +200,7 @@ defmodule Tackle.Consumer do
             options
           )
         else
-          Logger.info("Sending message to a dead messages queue")
+          Logger.info("Sending message to a dead messages queue: #{state.dead_queue}")
 
           Tackle.DelayedRetry.publish(
             state.url,
@@ -163,6 +209,16 @@ defmodule Tackle.Consumer do
             options
           )
         end
+      end
+
+      defp unique_name(length) do
+        :crypto.strong_rand_bytes(length)
+        |> Base.encode32(padding: false)
+      end
+
+      def handle_info(message, state) do
+        Logger.info("Received unknown message: #{inspect(message)}")
+        {:noreply, state}
       end
     end
   end

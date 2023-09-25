@@ -13,13 +13,16 @@ defmodule Tackle.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :amqp], mod: {Tackle, []}]
+    [
+      extra_applications: [:logger],
+      mod: {Tackle, []}
+    ]
   end
 
   defp deps do
     [
-      {:amqp, "~> 1.1.0"},
-      {:ex_spec, "~> 2.0", only: :test}
+      {:amqp, "~> 3.2"},
+      {:junit_formatter, "~> 3.3", only: [:test]}
     ]
   end
 end

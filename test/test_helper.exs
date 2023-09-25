@@ -1,6 +1,6 @@
 defmodule Support do
   def create_exchange(exchange_name) do
-    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
+    {:ok, connection} = AMQP.Connection.open("amqp://rabbitmq:5672")
     {:ok, channel} = AMQP.Channel.open(connection)
 
     AMQP.Exchange.direct(channel, exchange_name, durable: true)
@@ -9,7 +9,7 @@ defmodule Support do
   end
 
   def queue_status(queue_name) do
-    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
+    {:ok, connection} = AMQP.Connection.open("amqp://rabbitmq:5672")
     {:ok, channel} = AMQP.Channel.open(connection)
 
     {:ok, status} = AMQP.Queue.status(channel, queue_name)
@@ -20,7 +20,7 @@ defmodule Support do
   end
 
   def purge_queue(queue_name, set_ttl \\ false) do
-    {:ok, connection} = AMQP.Connection.open("amqp://localhost")
+    {:ok, connection} = AMQP.Connection.open("amqp://rabbitmq:5672")
     {:ok, channel} = AMQP.Channel.open(connection)
 
     if set_ttl do
@@ -57,4 +57,5 @@ defmodule Support do
   end
 end
 
-ExUnit.start(trace: true, capture_log: true)
+ExUnit.configure(formatters: [JUnitFormatter, ExUnit.CLIFormatter], capture_log: true)
+ExUnit.start()

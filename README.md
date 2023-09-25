@@ -40,7 +40,7 @@ To publish a message to an exchange:
 
 ``` elixir
 options = %{
-  url: "amqp://localhost",
+  url: "amqp://rabbitmq:5672",
   exchange: "test-exchange",
   routing_key: "test-messages",
 }
@@ -57,7 +57,7 @@ that the exchange exists, and publish messages with `Tackle.Exchange.publish`.
 Example:
 
 ``` elixir
-{:ok, c}  = Tackle.Connection.open(:publisher, "amqp://localhost")
+{:ok, c}  = Tackle.Connection.open(:publisher, "amqp://rabbitmq:5672")
 channel   = Tackle.Channel.create(c)
 exchange  = Tackle.Exchange.create(channel, "test-exchange")
 route_key = "hello"
@@ -74,7 +74,7 @@ First, declare a consumer module:
 ``` elixir
 defmodule TestConsumer do
   use Tackle.Consumer,
-    url: "amqp://localhost",
+    url: "amqp://rabbitmq:5672",
     exchange: "test-exchange",
     routing_key: "test-messages",
     service: "my-service"
@@ -104,7 +104,7 @@ To rescue those messages, you can use `Tackle.republish`:
 dead_queue_name = "my-service.test-message.dead"
 
 options = {
-  url: "amqp://localhost",
+  url: "amqp://rabbitmq:5672",
   queue: dead_queue_name,
   exchange: "test-exchange",
   routing_key: "test-messages",

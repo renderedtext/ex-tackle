@@ -1,12 +1,12 @@
 defmodule Tackle.BrokenConsumerTest do
-  use ExSpec
+  use ExUnit.Case, async: false
 
   alias Support
   alias Support.MessageTrace
 
   defmodule BrokenConsumer do
     use Tackle.Consumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       exchange: "test-exchange",
       routing_key: "test-messages",
       service: "broken-service",
@@ -17,12 +17,12 @@ defmodule Tackle.BrokenConsumerTest do
       message |> MessageTrace.save("broken-service")
 
       # exception
-      :a + 1
+      raise "oops"
     end
   end
 
   @publish_options %{
-    url: "amqp://localhost",
+    url: "amqp://rabbitmq:5672",
     exchange: "test-exchange",
     routing_key: "test-messages"
   }
@@ -38,7 +38,7 @@ defmodule Tackle.BrokenConsumerTest do
   end
 
   describe "healthy consumer" do
-    it "receives the message multiple times" do
+    test "receives the message multiple times" do
       Tackle.publish("Hi!", @publish_options)
 
       :timer.sleep(5000)

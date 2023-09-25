@@ -1,15 +1,15 @@
 defmodule Tackle.HealthyConsumerTest do
-  use ExSpec
+  use ExUnit.Case, async: false
 
   alias Support
   alias Support.MessageTrace
 
   defmodule TestConsumer do
     use Tackle.Consumer,
-      url: "amqp://localhost",
-      exchange: "test-exchange",
+      url: "amqp://rabbitmq:5672",
+      exchange: "HealthyConsumerTest",
       routing_key: "health",
-      service: "healthy-service"
+      service: "Tackle"
 
     def handle_message(message) do
       message |> MessageTrace.save("healthy-service")
@@ -17,8 +17,8 @@ defmodule Tackle.HealthyConsumerTest do
   end
 
   @publish_options %{
-    url: "amqp://localhost",
-    exchange: "test-exchange",
+    url: "amqp://rabbitmq:5672",
+    exchange: "HealthyConsumerTest",
     routing_key: "health"
   }
 
@@ -31,7 +31,7 @@ defmodule Tackle.HealthyConsumerTest do
   end
 
   describe "healthy consumer" do
-    it "receives a published message on the exchange" do
+    test "receives a published message on the exchange" do
       Tackle.publish("Hi!", @publish_options)
 
       :timer.sleep(1000)

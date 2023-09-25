@@ -1,69 +1,126 @@
 defmodule Tackle.ListenerTest do
-  use ExSpec
+  use ExUnit.Case, async: false
 
   defmodule TestConsumer do
+    require Logger
+
     use Tackle.Consumer,
-      url: "amqp://localhost",
+      url: "amqp://rabbitmq:5672",
       exchange: "test-exchange",
       routing_key: "test-messages",
       service: "test-service"
 
     def handle_message(_) do
-      IO.puts("here")
+      Logger.info("Received message")
     end
   end
 
+  defmodule TestMulticonsumerWithoutDeadLetter do
+    require Logger
+
+    use Tackle.Multiconsumer,
+      url: "amqp://rabbitmq:5672",
+      service: "TestMulticonsumerWithoutDeadLetterService",
+      routes: [
+        {"TestMulticonsumerWithoutDeadLetterExchange", "test-messages", :handler}
+      ],
+      dead_letter_queue: false
+
+    def handler(_message) do
+      Logger.info("Handled!")
+    end
+  end
+
+  defmodule TestConsumerWithoutDeadLetter do
+    require Logger
+
+    use Tackle.Consumer,
+      url: "amqp://rabbitmq:5672",
+      exchange: "TestConsumerWithoutDeadLetterExchange",
+      routing_key: "test-messages",
+      service: "TestConsumerWithoutDeadLetterService",
+      dead_letter_queue: false
+
+    def handle_message(_) do
+      Logger.info("Received message")
+    end
+  end
+
+  setup do
+    {:ok, conn} = AMQP.Connection.open("amqp://rabbitmq:5672")
+    {:ok, channel} = AMQP.Channel.open(conn)
+
+    [
+      conn: conn,
+      channel: channel
+    ]
+  end
+
   describe "consumer creation" do
-    it "connects to amqp server without errors" do
+    test "creates a queue on the amqp server", %{channel: channel} do
       {response, _} = TestConsumer.start_link()
 
       assert response == :ok
+
+      {:ok, %{consumer_count: 1}} = AMQP.Queue.status(channel, "test-service.test-messages")
+
+      {:ok, _} = AMQP.Queue.status(channel, "test-service.test-messages.delay.10")
+
+      {:ok, _} = AMQP.Queue.status(channel, "test-service.test-messages.dead")
     end
+  end
 
-    it "creates a queue on the amqp server" do
-      {_, _} = TestConsumer.start_link()
+  describe "TestConsumerWithoutDeadLetter" do
+    test "creates a queue without dead letters if configured to do so", %{channel: channel} do
+      {response, _} = TestConsumerWithoutDeadLetter.start_link()
 
-      :timer.sleep(1000)
+      assert response == :ok
 
-      {response, 0} =
-        case System.get_env("DOCKER_RABBITMQ") do
-          "true" ->
-            System.cmd("docker", [
-              "exec",
-              System.get_env("DOCKER_RABBITMQ_CONTAINER_NAME"),
-              "rabbitmqctl",
-              "list_queues"
-            ])
+      {:ok, %{consumer_count: 1}} =
+        AMQP.Queue.declare(channel, "TestConsumerWithoutDeadLetterService.test-messages",
+          passive: true
+        )
 
-          _ ->
-            System.cmd("sudo", ["rabbitmqctl", "list_queues"])
-        end
+      catch_exit(
+        AMQP.Queue.declare(channel, "TestConsumerWithoutDeadLetterService.test-messages.delay.10",
+          passive: true
+        )
+      )
 
-      assert String.contains?(response, "test-service.test-messages")
-      assert String.contains?(response, "test-service.test-messages.delay.10")
-      assert String.contains?(response, "test-service.test-messages.dead")
+      catch_exit(
+        AMQP.Queue.declare(channel, "TestConsumerWithoutDeadLetterService.test-messages.dead",
+          passive: true
+        )
+      )
     end
+  end
 
-    it "creates an exchange on the amqp server" do
-      {_, _} = TestConsumer.start_link()
+  describe "TestMulticonsumerWithoutDeadLetter" do
+    test "creates a queue without dead letters if configured to do so", %{channel: channel} do
+      {response, _} = TestMulticonsumerWithoutDeadLetter.start_link()
 
-      :timer.sleep(1000)
+      assert response == :ok
 
-      {response, 0} =
-        case System.get_env("DOCKER_RABBITMQ") do
-          "true" ->
-            System.cmd("docker", [
-              "exec",
-              System.get_env("DOCKER_RABBITMQ_CONTAINER_NAME"),
-              "rabbitmqctl",
-              "list_queues"
-            ])
+      {:ok, %{consumer_count: 1}} =
+        AMQP.Queue.declare(channel, "TestMulticonsumerWithoutDeadLetterService.test-messages",
+          passive: true
+        )
 
-          _ ->
-            System.cmd("sudo", ["rabbitmqctl", "list_queues"])
-        end
+      catch_exit(
+        AMQP.Queue.declare(
+          channel,
+          "TestMulticonsumerWithoutDeadLetterService.test-messages.delay.10",
+          passive: true
+        )
+      )
 
-      assert String.contains?(response, "test-service.test-messages")
+      catch_exit(
+        AMQP.Queue.declare(
+          channel,
+          "TestMulticonsumerWithoutDeadLetterService.test-messages.dead",
+          passive: true
+        )
+      )
     end
   end
 end

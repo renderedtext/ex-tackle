@@ -5,47 +5,64 @@ defmodule Tackle.Queue do
   # one week in milliseconds
   @dead_letter_timeout 604_800_000
 
-  def create_queue(channel, service_exchange) do
-    queue_name = service_exchange
+  def create_queue(channel, queue_name, opts \\ []) do
+    defaults = [
+      durable: true
+    ]
+
+    opts = Keyword.merge(defaults, opts)
 
     Logger.info("Creating queue '#{queue_name}'")
 
-    {:ok, _} = Queue.declare(channel, queue_name, durable: true)
+    {:ok, _} = Queue.declare(channel, queue_name, opts)
 
     queue_name
   end
 
-  def create_delay_queue(channel, service_exchange, routing_key, delay) do
-    queue_name = "#{service_exchange}.delay.#{delay}"
+  def create_delay_queue(
+        channel,
+        dead_letter_exchange_name,
+        queue_name,
+        routing_key,
+        delay,
+        opts \\ []
+      ) do
+    delay_queue_name = "#{queue_name}.delay.#{delay}"
 
-    Logger.info("Creating delay queue '#{queue_name}'")
+    defaults = [
+      durable: true,
+      arguments: [
+        {"x-dead-letter-exchange", :longstr, dead_letter_exchange_name},
+        {"x-dead-letter-routing-key", :longstr, routing_key},
+        {"x-message-ttl", :long, delay * 1000}
+      ]
+    ]
 
-    {:ok, _} =
-      Queue.declare(channel, queue_name,
-        durable: true,
-        arguments: [
-          {"x-dead-letter-exchange", :longstr, service_exchange},
-          {"x-dead-letter-routing-key", :longstr, routing_key},
-          {"x-message-ttl", :long, delay * 1000}
-        ]
-      )
+    opts = Keyword.merge(defaults, opts)
 
-    queue_name
+    Logger.info("Creating delay queue '#{delay_queue_name}'")
+
+    {:ok, _} = Queue.declare(channel, delay_queue_name, opts)
+
+    delay_queue_name
   end
 
-  def create_dead_queue(channel, service_exchange) do
-    queue_name = "#{service_exchange}.dead"
+  def create_dead_queue(channel, queue_name, opts \\ []) do
+    dead_queue_name = "#{queue_name}.dead"
 
-    Logger.info("Creating dead queue '#{queue_name}'")
+    defaults = [
+      durable: true,
+      arguments: [
+        {"x-message-ttl", :long, @dead_letter_timeout}
+      ]
+    ]
 
-    {:ok, _} =
-      Queue.declare(channel, queue_name,
-        durable: true,
-        arguments: [
-          {"x-message-ttl", :long, @dead_letter_timeout}
-        ]
-      )
+    opts = Keyword.merge(defaults, opts)
 
-    queue_name
+    Logger.info("Creating dead queue '#{dead_queue_name}'")
+
+    {:ok, _} = Queue.declare(channel, dead_queue_name, opts)
+
+    dead_queue_name
   end
 end
