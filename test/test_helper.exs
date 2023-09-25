@@ -39,6 +39,17 @@ defmodule Support do
     AMQP.Connection.close(connection)
   end
 
+  def consumer_count(queue_name) do
+    {:ok, connection} = AMQP.Connection.open("amqp://rabbitmq:5672")
+    {:ok, channel} = AMQP.Channel.open(connection)
+
+    consumer_count = AMQP.Queue.consumer_count(channel, queue_name)
+
+    AMQP.Connection.close(connection)
+
+    consumer_count
+  end
+
   defmodule MessageTrace do
     # we should reimplement this with something nicer
     # like an in memory queue

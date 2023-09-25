@@ -125,7 +125,7 @@ defmodule Tackle.Consumer do
           routing_key
         )
 
-        {:ok, _consumer_tag} = AMQP.Basic.consume(channel, queue)
+        {:ok, consumer_tag} = AMQP.Basic.consume(channel, queue)
 
         state = %{
           url: url,
@@ -133,7 +133,8 @@ defmodule Tackle.Consumer do
           has_dead_letter?: create_dead_letter_queue?,
           delay_queue: delay_queue,
           dead_queue: dead_queue,
-          retry_limit: retry_limit
+          retry_limit: retry_limit,
+          consumer_tag: consumer_tag
         }
 
         {:ok, state}
@@ -178,6 +179,10 @@ defmodule Tackle.Consumer do
       def handle_info({:DOWN, _, :process, _pid, reason}, _) do
         # Stop GenServer. Will be restarted by Supervisor.
         {:stop, {:connection_lost, reason}, nil}
+      end
+
+      def terminate(_reason, state) do
+        AMQP.Basic.cancel(state.channel, state.consumer_tag)
       end
 
       defp retry(state, payload, headers) do
