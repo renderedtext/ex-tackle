@@ -8,7 +8,7 @@ defmodule Tackle.DelayedRetry do
   def retry_count_from_headers([_ | tail]), do: retry_count_from_headers(tail)
 
   def publish(url, queue, payload, options) do
-    Logger.info("Connecting to '#{url}'")
+    Logger.debug("Connecting to '#{Tackle.Util.scrub_url(url)}'")
 
     {:ok, connection} = AMQP.Connection.open(url)
     {:ok, channel} = Channel.open(connection)
