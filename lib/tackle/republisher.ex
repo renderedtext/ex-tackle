@@ -2,20 +2,24 @@ defmodule Tackle.Republisher do
   use AMQP
   require Logger
 
-  def republish(url, queue, exchange, routing_key, count) do
-    Logger.info("Connecting to '#{url}'")
-    {:ok, connection} = AMQP.Connection.open(url)
+  @deprecated "Use Tackle.republish/1 instead"
+  def republish(url, queue, exchange, routing_key, count) when is_binary(url) do
+    connection_id = :default
+    {:ok, connection} = Tackle.Connection.open(connection_id, url)
     channel = Tackle.Channel.create(connection)
 
     try do
-      0..(count - 1)
-      |> Enum.each(fn idx ->
-        republish_one_message(channel, queue, exchange, routing_key, idx)
-      end)
+      republish(channel, queue, exchange, routing_key, count)
     after
-      AMQP.Channel.close(channel)
-      AMQP.Connection.close(connection)
+      Tackle.Util.cleanup(connection_id, connection, channel)
     end
+  end
+
+  def republish(channel, queue, exchange, routing_key, count) do
+    0..(count - 1)
+    |> Enum.each(fn idx ->
+      republish_one_message(channel, queue, exchange, routing_key, idx)
+    end)
   end
 
   defp republish_one_message(channel, queue, exchange, routing_key, idx) do

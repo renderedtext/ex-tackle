@@ -67,6 +67,22 @@ route_key = "hello"
 end)
 ```
 
+You can also use named connection like this:
+
+``` elixir
+options = %{
+  url: "amqp://rabbitmq:5672",
+  connection_id: :publisher,
+  exchange: "test-exchange",
+  routing_key: "test-messages",
+}
+
+Tackle.publish("Hi!", options)
+```
+
+This example will look for already opened connection with name `:publisher` and reuse it.
+If the connection is not found, it will be created. Connections are managed by `Tackle.Connection`.
+
 ## Consuming messages from an exchange
 
 First, declare a consumer module:

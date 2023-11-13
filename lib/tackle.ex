@@ -19,31 +19,38 @@ defmodule Tackle do
     exchange = options[:exchange]
     routing_key = options[:routing_key]
     exchange_opts = options[:exchange_opts] || []
+    connection_id = options[:connection_id] || :default
 
     {_exchange_type, exchange_name} =
       exchange
       |> Tackle.Util.parse_exchange()
 
-    Logger.debug("Connecting to '#{url}'")
-    {:ok, connection} = AMQP.Connection.open(url)
+    {:ok, connection} = Tackle.Connection.open(connection_id, url)
     channel = Tackle.Channel.create(connection)
 
     try do
       Tackle.Exchange.create(channel, exchange, exchange_opts)
       Tackle.Exchange.publish(channel, exchange_name, message, routing_key)
     after
-      AMQP.Channel.close(channel)
-      AMQP.Connection.close(connection)
+      Tackle.Util.cleanup(connection_id, connection, channel)
     end
   end
 
   def republish(options) do
     url = options[:url]
     queue = options[:queue]
-    exchange = options[:exchange]
+    exchange_name = options[:exchange]
     routing_key = options[:routing_key]
     count = options[:count] || 1
+    connection_id = options[:connection_id] || :default
 
-    Tackle.Republisher.republish(url, queue, exchange, routing_key, count)
+    {:ok, connection} = Tackle.Connection.open(connection_id, url)
+    channel = Tackle.Channel.create(connection)
+
+    try do
+      Tackle.Republisher.republish(url, queue, exchange_name, routing_key, count)
+    after
+      Tackle.Util.cleanup(connection_id, connection, channel)
+    end
   end
 end

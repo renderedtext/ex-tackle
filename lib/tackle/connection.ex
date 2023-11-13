@@ -31,6 +31,19 @@ defmodule Tackle.Connection do
     open_(name, url)
   end
 
+  def open(url) do
+    Logger.debug("Connecting to '#{scrub_url(url)}'")
+
+    AMQP.Connection.open(url)
+  end
+
+  defp scrub_url(url) do
+    url
+    |> URI.parse()
+    |> Map.put(:userinfo, nil)
+    |> URI.to_string()
+  end
+
   @doc """
   Get a list of opened connections
   """
@@ -101,6 +114,4 @@ defmodule Tackle.Connection do
   defp validate_connection_process_rh(_alive? = false, _connection, _name) do
     {:error, :no_process}
   end
-
-  def open(url), do: AMQP.Connection.open(url)
 end

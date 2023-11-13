@@ -8,16 +8,15 @@ defmodule Tackle.DelayedRetry do
   def retry_count_from_headers([_ | tail]), do: retry_count_from_headers(tail)
 
   def publish(url, queue, payload, options) do
-    Logger.info("Connecting to '#{url}'")
+    connection_id = options[:connection_id] || :default
 
-    {:ok, connection} = AMQP.Connection.open(url)
+    {:ok, connection} = Tackle.Connection.open(connection_id, url)
     {:ok, channel} = Channel.open(connection)
 
     try do
       :ok = AMQP.Basic.publish(channel, "", queue, payload, options)
     after
-      AMQP.Channel.close(channel)
-      AMQP.Connection.close(connection)
+      Tackle.Util.cleanup(connection_id, connection, channel)
     end
   end
 end

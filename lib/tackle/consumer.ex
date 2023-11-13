@@ -134,7 +134,8 @@ defmodule Tackle.Consumer do
           delay_queue: delay_queue,
           dead_queue: dead_queue,
           retry_limit: retry_limit,
-          consumer_tag: consumer_tag
+          consumer_tag: consumer_tag,
+          connection_id: connection_id
         }
 
         {:ok, state}
@@ -189,6 +190,7 @@ defmodule Tackle.Consumer do
         retry_count = Tackle.DelayedRetry.retry_count_from_headers(headers)
 
         options = [
+          connection_id: state.connection_id,
           persistent: true,
           headers: [
             retry_count: retry_count + 1

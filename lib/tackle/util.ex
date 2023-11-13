@@ -7,4 +7,13 @@ defmodule Tackle.Util do
       name -> {:direct, name}
     end
   end
+
+  def cleanup(:default, connection, channel) do
+    AMQP.Channel.close(channel)
+    AMQP.Connection.close(connection)
+  end
+
+  def cleanup(_, _, channel) do
+    AMQP.Channel.close(channel)
+  end
 end
