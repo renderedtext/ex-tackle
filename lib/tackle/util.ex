@@ -8,10 +8,12 @@ defmodule Tackle.Util do
     end
   end
 
-  def scrub_url(url) do
-    url
-    |> URI.parse()
-    |> Map.put(:userinfo, nil)
-    |> URI.to_string()
+  def cleanup(:default, connection, channel) do
+    AMQP.Channel.close(channel)
+    AMQP.Connection.close(connection)
+  end
+
+  def cleanup(_, _, channel) do
+    AMQP.Channel.close(channel)
   end
 end

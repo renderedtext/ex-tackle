@@ -88,7 +88,7 @@ defmodule Tackle.RepublishTest do
       #
 
       MessageTrace.clear("fixed-service")
-      {:ok, _} = FixedConsumer.start_link()
+      {:ok, fixed_consumer} = FixedConsumer.start_link()
       :timer.sleep(1000)
 
       Tackle.republish(%{
@@ -99,13 +99,10 @@ defmodule Tackle.RepublishTest do
         count: 2
       })
 
+      GenServer.stop(fixed_consumer)
       :timer.sleep(2000)
     end
 
-    # Since bumping the `amqp` dependency from 1.1.0 - the process is not connecting fast enough to the queue.
-    # This causes the test to fail. I'm not sure why this is happening, but I'm skipping the test for now.
-    @tag :skip
-    @tag :fixme
     test "consumes only two messages" do
       assert MessageTrace.content("fixed-service") == "Hi there!"
     end
