@@ -10,7 +10,7 @@ defmodule Tackle.DelayedRetry do
   def publish(url, queue, payload, options) do
     Logger.debug("Connecting to '#{Tackle.Util.scrub_url(url)}'")
 
-    {:ok, connection} = AMQP.Connection.open(url)
+    {:ok, connection} = Tackle.Connection.open(url)
     {:ok, channel} = Channel.open(connection)
 
     try do
