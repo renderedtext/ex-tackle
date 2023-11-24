@@ -98,9 +98,9 @@ defmodule Tackle.RepublishTest do
         routing_key: "test-messages",
         count: 2
       })
+      :timer.sleep(1000)
 
       GenServer.stop(fixed_consumer)
-      :timer.sleep(2000)
     end
 
     test "consumes only two messages" do
