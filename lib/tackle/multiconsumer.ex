@@ -45,9 +45,6 @@ defmodule Tackle.Multiconsumer do
         dead_letter_queue = Keyword.get(opts, :dead_letter_queue, true)
         service_per_echange = Keyword.get(opts, :service_per_exchange, false)
 
-        service_name =
-          Tackle.Multiconsumer.service_name(service, exchange_name, service_per_echange)
-
         module_name =
           Tackle.Multiconsumer.consumer_module_name(caller_module, exchange_name, routing_key)
 
@@ -55,7 +52,12 @@ defmodule Tackle.Multiconsumer do
           defmodule unquote(module_name) do
             use Tackle.Consumer,
               url: unquote(opts[:url]),
-              service: unquote(service_name),
+              service:
+                Tackle.Multiconsumer.service_name(
+                  unquote(service),
+                  unquote(exchange),
+                  unquote(service_per_echange)
+                ),
               exchange: unquote(exchange),
               routing_key: unquote(routing_key),
               queue: unquote(queue),

@@ -99,8 +99,9 @@ defmodule Tackle.RepublishTest do
         count: 2
       })
 
+      :timer.sleep(1000)
+
       GenServer.stop(fixed_consumer)
-      :timer.sleep(2000)
     end
 
     test "consumes only two messages" do
