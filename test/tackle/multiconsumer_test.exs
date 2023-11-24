@@ -105,11 +105,13 @@ defmodule Tackle.MulticonsumerTest do
       {:ok, _pid} =
         MulticonsumerWithDynamicQueueName.start_link(process_name: {:global, make_ref()})
 
-      Tackle.publish("HELLO!",
-        url: "amqp://rabbitmq:5672",
-        exchange: "MulticonsumerWithMultipleHandlersExchange",
-        routing_key: "routing.key1"
-      )
+      {:ok, c} = Tackle.Connection.open(:publisher, "amqp://rabbitmq:5672")
+      channel = Tackle.Channel.create(c)
+      exchange1 = Tackle.Exchange.create(channel, "MulticonsumerWithMultipleHandlersExchange")
+      exchange2 = Tackle.Exchange.create(channel, "Exchange2")
+
+      Tackle.Exchange.publish(channel, exchange1, "HELLO!", "routing.key1")
+      Tackle.Exchange.publish(channel, exchange2, "HELLO!", "routing.key1")
 
       assert_receive "first handler fired", 1000
       assert_receive "first handler fired", 1000
@@ -117,11 +119,8 @@ defmodule Tackle.MulticonsumerTest do
       refute_receive "second handler fired", 1000
       refute_receive "third handler fired", 1000
 
-      Tackle.publish("HELLO!",
-        url: "amqp://rabbitmq:5672",
-        exchange: "MulticonsumerWithMultipleHandlersExchange",
-        routing_key: "routing.key2"
-      )
+      Tackle.Exchange.publish(channel, exchange1, "HELLO!", "routing.key2")
+      Tackle.Exchange.publish(channel, exchange2, "HELLO!", "routing.key2")
 
       assert_receive "second handler fired", 1000
       assert_receive "second handler fired", 1000
@@ -129,17 +128,70 @@ defmodule Tackle.MulticonsumerTest do
       refute_receive "second handler fired", 1000
       refute_receive "third handler fired", 1000
 
-      Tackle.publish("HELLO!",
-        url: "amqp://rabbitmq:5672",
-        exchange: "MulticonsumerWithMultipleHandlersExchange",
-        routing_key: "routing.key3"
-      )
+      Tackle.Exchange.publish(channel, exchange1, "HELLO!", "routing.key3")
+      Tackle.Exchange.publish(channel, exchange2, "HELLO!", "routing.key3")
 
       assert_receive "third handler fired", 1000
       assert_receive "third handler fired", 1000
       refute_receive "first handler fired", 1000
       refute_receive "second handler fired", 1000
       refute_receive "third handler fired", 1000
+    end
+  end
+
+  describe "Multiconsumer with service per exchange" do
+    defmodule MulticonsumerWithServicePerExchange do
+      use Tackle.Multiconsumer,
+        url: "amqp://rabbitmq:5672",
+        service: "MulticonsumerWithSerivcePerExchangeService",
+        service_per_exchange: true,
+        routes: [
+          {"Exchange1", "routing.key4", :first_handler},
+          {"Exchange2", "routing.key4", :second_handler}
+        ]
+
+      def first_handler(_message) do
+        send(:checker, "first handler fired")
+      end
+
+      def second_handler(_message) do
+        send(:checker, "second handler fired")
+      end
+    end
+
+    test "one message should be process by one handler" do
+      Process.register(self(), :checker)
+
+      {:ok, _pid} =
+        MulticonsumerWithServicePerExchange.start_link(process_name: {:global, make_ref()})
+
+      {:ok, _pid} =
+        MulticonsumerWithServicePerExchange.start_link(process_name: {:global, make_ref()})
+
+      {:ok, c} = Tackle.Connection.open(:publisher, "amqp://rabbitmq:5672")
+      channel = Tackle.Channel.create(c)
+      exchange1 = Tackle.Exchange.create(channel, "Exchange1")
+      exchange2 = Tackle.Exchange.create(channel, "Exchange2")
+
+      Tackle.Exchange.publish(channel, exchange1, "HELLO!", "routing.key4")
+      Tackle.Exchange.publish(channel, exchange1, "HELLO!", "routing.key4")
+      Tackle.Exchange.publish(channel, exchange1, "HELLO!", "routing.key4")
+
+      assert_receive "first handler fired", 1000
+      assert_receive "first handler fired", 1000
+      assert_receive "first handler fired", 1000
+      refute_receive "second handler fired", 1000
+      refute_receive "first handler fired", 1000
+
+      Tackle.Exchange.publish(channel, exchange2, "HELLO!", "routing.key4")
+      Tackle.Exchange.publish(channel, exchange2, "HELLO!", "routing.key4")
+      Tackle.Exchange.publish(channel, exchange2, "HELLO!", "routing.key4")
+
+      assert_receive "second handler fired", 1000
+      assert_receive "second handler fired", 1000
+      assert_receive "second handler fired", 1000
+      refute_receive "first handler fired", 1000
+      refute_receive "second handler fired", 1000
     end
   end
 end
