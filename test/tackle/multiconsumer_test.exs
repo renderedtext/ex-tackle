@@ -144,9 +144,10 @@ defmodule Tackle.MulticonsumerTest do
       use Tackle.Multiconsumer,
         url: "amqp://rabbitmq:5672",
         service: "MulticonsumerWithSerivcePerExchangeService",
+        service_per_exchange: true,
         routes: [
           {"Exchange1", "routing.key4", :first_handler},
-          {"Exchange2", "routing.key4", :second_handler},
+          {"Exchange2", "routing.key4", :second_handler}
         ]
 
       def first_handler(_message) do
