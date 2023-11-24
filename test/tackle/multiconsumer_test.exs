@@ -16,12 +16,44 @@ defmodule Tackle.MulticonsumerTest do
     end
   end
 
+  defmodule MulticonsumerExample2 do
+    require Logger
+
+    use Tackle.Multiconsumer,
+      url: "amqp://rabbitmq:5672",
+      service: "example_service2",
+      service_per_exchange: true,
+      routes: [
+        {"exchange-1", "key1", :handler}
+      ]
+
+    def handler(_message) do
+      Logger.info("Handled!")
+    end
+  end
+
   defmodule MulticonsumerExampleBeta do
     require Logger
 
     use Tackle.Multiconsumer,
       url: "amqp://rabbitmq:5672",
       service: "#{System.get_env("A")}.example_beta_service",
+      routes: [
+        {"exchange-1", "key1", :handler}
+      ]
+
+    def handler(_message) do
+      Logger.info("Handled!")
+    end
+  end
+
+  defmodule MulticonsumerExampleBeta2 do
+    require Logger
+
+    use Tackle.Multiconsumer,
+      url: "amqp://rabbitmq:5672",
+      service: "#{System.get_env("A")}.example_beta_service2",
+      service_per_exchange: true,
       routes: [
         {"exchange-1", "key1", :handler}
       ]
@@ -41,7 +73,9 @@ defmodule Tackle.MulticonsumerTest do
     expected_consumer_modules =
       [
         :"Elixir.Tackle.MulticonsumerTest.MulticonsumerExampleBeta.exchange-1.key1",
-        :"Elixir.Tackle.MulticonsumerTest.MulticonsumerExample.exchange-1.key1"
+        :"Elixir.Tackle.MulticonsumerTest.MulticonsumerExampleBeta2.exchange-1.key1",
+        :"Elixir.Tackle.MulticonsumerTest.MulticonsumerExample.exchange-1.key1",
+        :"Elixir.Tackle.MulticonsumerTest.MulticonsumerExample2.exchange-1.key1"
       ]
       |> Enum.sort()
 
