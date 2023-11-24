@@ -24,7 +24,6 @@ defmodule Tackle do
       exchange
       |> Tackle.Util.parse_exchange()
 
-    Logger.debug("Connecting to '#{Tackle.Util.scrub_url(url)}'")
     {:ok, connection} = Tackle.Connection.open(url)
     channel = Tackle.Channel.create(connection)
 

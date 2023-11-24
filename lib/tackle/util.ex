@@ -7,11 +7,4 @@ defmodule Tackle.Util do
       name -> {:direct, name}
     end
   end
-
-  def scrub_url(url) do
-    url
-    |> URI.parse()
-    |> Map.put(:userinfo, nil)
-    |> URI.to_string()
-  end
 end
