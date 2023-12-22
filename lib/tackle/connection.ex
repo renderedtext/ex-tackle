@@ -52,7 +52,7 @@ defmodule Tackle.Connection do
   end
 
   defp open_(name = :default, url) do
-    connection = open_with_name(url)
+    connection = open_with_name(url, name)
     Logger.info("Opening new connection #{inspect(connection)} for id: #{name}")
     connection
   end
