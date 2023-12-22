@@ -31,10 +31,15 @@ defmodule Tackle.Connection do
     open_(name, url)
   end
 
-  def open_with_name(url, name) do
-    Logger.debug("Connecting to '#{scrub_url(url)}' with name #{name}")
+  def open(url) do
+    Logger.debug("Connecting to '#{scrub_url(url)}'")
 
-    AMQP.Connection.open(url, name: Atom.to_string(name))
+    AMQP.Connection.open(url)
+  end
+
+  def open_with_name(url, name) do
+    Logger.debug("Connecting to '#{scrub_url(url)}' with name '#{name}'")
+    AMQP.Connection.open(url, name: name)
   end
 
   defp scrub_url(url) do
@@ -52,7 +57,7 @@ defmodule Tackle.Connection do
   end
 
   defp open_(name = :default, url) do
-    connection = open_with_name(url, name)
+    connection = open_with_name(url, Atom.to_string(name))
     Logger.info("Opening new connection #{inspect(connection)} for id: #{name}")
     connection
   end
@@ -73,7 +78,7 @@ defmodule Tackle.Connection do
   end
 
   defp open_and_persist(name, url) do
-    case open_with_name(url, name) do
+    case open_with_name(url, Atom.to_string(name)) do
       response = {:ok, connection} ->
         Agent.update(__MODULE__, fn state -> Map.put(state, name, connection) end)
         Logger.info("Opening new connection #{inspect(connection)} for id: #{name}")
