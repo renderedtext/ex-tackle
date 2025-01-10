@@ -18,7 +18,7 @@ blocks:
         - name: Lint
           env_vars:
             - name: ELIXIR_VERSION
-              value: "1.14"
+              value: "1.18"
           commands:
             - checkout
             - make format.check
@@ -28,10 +28,12 @@ blocks:
             - env_var: ELIXIR_VERSION
               values:
                 [
-                  "1.11",
-                  "1.12",
                   "1.13",
-                  "1.14.0",
+                  "1.14",
+                  "1.15",
+                  "1.16",
+                  "1.17",
+                  "1.18",
                 ]
             - env_var: SEMAPHORE_JOB_INDEX
               values: ["1", "2", "3", "4", "5"]
