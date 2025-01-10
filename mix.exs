@@ -21,7 +21,7 @@ defmodule Tackle.Mixfile do
 
   defp deps do
     [
-      {:amqp, "~> 3.2"},
+      {:amqp, "~> 3.3"},
       {:junit_formatter, "~> 3.3", only: [:test]}
     ]
   end
