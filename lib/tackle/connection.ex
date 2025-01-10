@@ -95,7 +95,7 @@ defmodule Tackle.Connection do
   end
 
   def reopen_on_validation_failure(state = {:error, _}, name, url) do
-    Logger.warn("Connection validation failed #{inspect(state)} for id: #{name}")
+    Logger.warning("Connection validation failed #{inspect(state)} for id: #{name}")
     Agent.update(__MODULE__, fn state -> Map.delete(state, name) end)
     open(name, url)
   end
