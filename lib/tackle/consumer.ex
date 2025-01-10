@@ -87,14 +87,7 @@ defmodule Tackle.Consumer do
           exchange_opts
         )
 
-        queue =
-          queue
-          |> case do
-            nil -> service_exchange_name
-            :dynamic -> unique_name(20)
-            name -> name
-          end
-
+        queue = Tackle.Util.resolve_queue(unquote(queue), service_exchange_name)
         main_queue = Tackle.Queue.create_queue(channel, queue, queue_opts)
 
         dead_queue =
@@ -214,11 +207,6 @@ defmodule Tackle.Consumer do
             options
           )
         end
-      end
-
-      defp unique_name(length) do
-        :crypto.strong_rand_bytes(length)
-        |> Base.encode32(padding: false)
       end
 
       def handle_info(message, state) do

@@ -7,4 +7,17 @@ defmodule Tackle.Util do
       name -> {:direct, name}
     end
   end
+
+  def resolve_queue(queue, service_exchange_name) do
+    case queue do
+      nil -> service_exchange_name
+      :dynamic -> unique_name(20)
+      name -> name
+    end
+  end
+
+  defp unique_name(length) do
+    :crypto.strong_rand_bytes(length)
+    |> Base.encode32(padding: false)
+  end
 end
