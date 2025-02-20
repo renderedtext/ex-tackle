@@ -19,7 +19,7 @@ defmodule Tackle.ConsumerTest do
   end
 
   describe "Consumer with dynamic queue name" do
-    test "every queue subscribed tto a routing key receives an event" do
+    test "every queue subscribed to a routing key receives an event" do
       Process.register(self(), :checker)
 
       ConsumerExample.start_link(process_name: {:global, make_ref()})
