@@ -144,3 +144,7 @@ defmodule Consumer do
     connection_id: :connection_identifier,
     ...
 ```
+
+## License
+
+This software is licensed under [the Apache 2.0 license](LICENSE).

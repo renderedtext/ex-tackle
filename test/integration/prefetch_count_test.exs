@@ -38,7 +38,7 @@ defmodule Tackle.ParallelMessageHandling_1_Test do
   end
 
   describe "parallel message handling" do
-    test "handles messages sequentialy", context do
+    test "handles messages sequentially", context do
       sup = context[:sup]
       Tackle.publish(sup |> inspect, @publish_options)
       Tackle.publish(sup |> inspect, @publish_options)
