@@ -42,12 +42,30 @@ defmodule Tackle.Connection do
     AMQP.Connection.open(url, name: name)
   end
 
-  defp scrub_url(url) do
-    url
-    |> URI.parse()
-    |> Map.put(:userinfo, nil)
-    |> URI.to_string()
+  @doc """
+  Returns the given AMQP url with its userinfo component removed, for use in
+  log and status output.
+
+  Uses a whitelist rather than blanking individual fields. A well-formed
+  `amqp`/`amqps` url (non-nil host) is rebuilt from only its scheme/host/port/path,
+  keeping host, port and vhost while dropping userinfo. Anything else - a nil
+  host, an unexpected scheme, a schemeless string, or non-binary input - is
+  replaced wholesale with a placeholder, since userinfo could otherwise survive
+  in another parsed field.
+  """
+  def scrub_url(url) when is_binary(url) do
+    case URI.parse(url) do
+      %URI{host: host, scheme: scheme} = uri
+      when is_binary(host) and scheme in ["amqp", "amqps"] ->
+        %URI{scheme: uri.scheme, host: uri.host, port: uri.port, path: uri.path}
+        |> URI.to_string()
+
+      _ ->
+        "[filtered]"
+    end
   end
+
+  def scrub_url(_url), do: "[filtered]"
 
   @doc """
   Get a list of opened connections
