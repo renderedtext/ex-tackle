@@ -213,6 +213,16 @@ defmodule Tackle.Consumer do
         Logger.info("Received unknown message: #{inspect(message)}")
         {:noreply, state}
       end
+
+      # Replaces the AMQP connection url with a placeholder in crash reports
+      # and :sys.get_status/1,2 output. Only affects what is displayed - the
+      # real state used by the process is untouched.
+      def format_status(_reason, [_pdict, state]) do
+        display_state = %{state | url: Tackle.Connection.scrub_url(state.url)}
+        [{:data, [{'State', display_state}]}]
+      end
+
+      defoverridable format_status: 2
     end
   end
 end

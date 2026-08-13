@@ -31,4 +31,42 @@ defmodule Tackle.ConnectionTest do
   def get_pid({:ok, connection}) do
     connection |> Map.get(:pid)
   end
+
+  describe "scrub_url/1" do
+    test "removes credentials from a well-formed url while preserving the rest" do
+      scrubbed = Tackle.Connection.scrub_url("amqp://user:pass@host:5672/vhost")
+
+      refute scrubbed =~ "pass"
+      refute scrubbed =~ "user"
+      assert scrubbed == "amqp://host:5672/vhost"
+    end
+
+    test "redacts a url that parses to a nil host but still carries credentials" do
+      # This url parses with host: nil and the credentials retained in the
+      # :authority field, which URI.to_string/1 would otherwise emit verbatim.
+      url = "amqp://user:pass@/vhost"
+
+      assert %URI{host: nil, authority: "user:pass@"} = URI.parse(url)
+
+      scrubbed = Tackle.Connection.scrub_url(url)
+
+      assert scrubbed == "[filtered]"
+      refute scrubbed =~ "pass"
+      refute scrubbed =~ "user"
+    end
+
+    test "redacts a schemeless url that parses credentials into the path" do
+      # No "//": URI.parse puts "user:pass@host" in :path with a nil host, so
+      # rebuilding from parsed fields would round-trip the credentials.
+      url = "user:pass@host"
+
+      assert %URI{host: nil} = URI.parse(url)
+
+      scrubbed = Tackle.Connection.scrub_url(url)
+
+      assert scrubbed == "[filtered]"
+      refute scrubbed =~ "pass"
+      refute scrubbed =~ "user"
+    end
+  end
 end

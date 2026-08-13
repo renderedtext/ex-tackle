@@ -36,4 +36,30 @@ defmodule Tackle.ConsumerTest do
       refute_receive "HELLO WORLD!", 1000
     end
   end
+
+  describe "format_status/2" do
+    test "hides the connection url's credentials without touching the real state" do
+      raw_url = "amqp://produser:sup3rSecret@rabbitmq:5672/prod"
+
+      state = %{
+        url: raw_url,
+        channel: :fake_channel,
+        has_dead_letter?: true,
+        delay_queue: "delay_queue",
+        dead_queue: "dead_queue",
+        retry_limit: 10,
+        consumer_tag: "tag"
+      }
+
+      [{:data, [{'State', sanitized_state}]}] =
+        ConsumerExample.format_status(:normal, [[], state])
+
+      refute inspect(sanitized_state) =~ "sup3rSecret"
+      refute inspect(sanitized_state) =~ ~r/amqp:\/\/[^\/]*:[^\/]*@/
+      assert sanitized_state.url == "amqp://rabbitmq:5672/prod"
+
+      # the actual runtime state (read by reconnect/retry logic) is untouched
+      assert state.url == raw_url
+    end
+  end
 end
