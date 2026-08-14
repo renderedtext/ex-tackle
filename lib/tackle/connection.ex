@@ -67,6 +67,32 @@ defmodule Tackle.Connection do
 
   def scrub_url(_url), do: "[filtered]"
 
+  # Renders an arbitrary term (typically a connection-open result like
+  # `{:ok, %AMQP.Connection{}}` or `{:error, reason}`) safely for logging, by
+  # stripping AMQP userinfo from its inspected form.
+  #
+  # `reason` terms from a failed connection-open can embed the raw AMQP url -
+  # including credentials - as echoed by `:amqp_uri.parse/2` on a malformed
+  # url (as a binary or a charlist). Because the url is malformed, its
+  # userinfo can legitimately contain unencoded special characters (spaces,
+  # slashes, a stray `@`, even the "other" quote character) - exactly the
+  # kind of thing that made the url unparseable in the first place. A fixed
+  # exclusion set (e.g. "stop at any quote or space") fails open on whichever
+  # character it didn't anticipate, so this instead captures the ACTUAL
+  # delimiter quote (`'` for a charlist, `"` for a binary/`~c"..."`)
+  # immediately preceding `amqp(s)://`, then only that same quote -
+  # backreferenced - terminates the run (an escaped `\"`/`\'` pair from
+  # `inspect/1` never terminates it either way). Being greedy, it backtracks
+  # to the LAST `@` before that boundary - i.e. the real userinfo/host split,
+  # even if the userinfo itself contains one. It is a no-op for terms with no
+  # such userinfo, so it is safe to apply unconditionally (e.g. to an
+  # already-clean `%AMQP.Connection{}` struct).
+  defp scrub_term(term) do
+    term
+    |> inspect()
+    |> String.replace(~r{(["'])(amqps?://)(?:\\.|(?!\1)[^\\])*@}, "\\1\\2")
+  end
+
   @doc """
   Get a list of opened connections
   """
@@ -76,7 +102,7 @@ defmodule Tackle.Connection do
 
   defp open_(name = :default, url) do
     connection = open_with_name(url, Atom.to_string(name))
-    Logger.info("Opening new connection #{inspect(connection)} for id: #{name}")
+    Logger.info("Opening new connection #{scrub_term(connection)} for id: #{name}")
     connection
   end
 
@@ -87,7 +113,7 @@ defmodule Tackle.Connection do
         open_and_persist(name, url)
 
       connection ->
-        Logger.info("Fetched existing connection #{inspect(connection)} for id: #{name}")
+        Logger.info("Fetched existing connection #{scrub_term(connection)} for id: #{name}")
 
         connection
         |> validate(name)
@@ -99,11 +125,11 @@ defmodule Tackle.Connection do
     case open_with_name(url, Atom.to_string(name)) do
       response = {:ok, connection} ->
         Agent.update(__MODULE__, fn state -> Map.put(state, name, connection) end)
-        Logger.info("Opening new connection #{inspect(connection)} for id: #{name}")
+        Logger.info("Opening new connection #{scrub_term(connection)} for id: #{name}")
         response
 
       error ->
-        Logger.error("Failed to open new connection for id: #{name}: #{error}")
+        Logger.error("Failed to open new connection for id: #{name}: #{scrub_term(error)}")
         error
     end
   end
@@ -113,7 +139,7 @@ defmodule Tackle.Connection do
   end
 
   def reopen_on_validation_failure(state = {:error, _}, name, url) do
-    Logger.warning("Connection validation failed #{inspect(state)} for id: #{name}")
+    Logger.warning("Connection validation failed #{scrub_term(state)} for id: #{name}")
     Agent.update(__MODULE__, fn state -> Map.delete(state, name) end)
     open(name, url)
   end
