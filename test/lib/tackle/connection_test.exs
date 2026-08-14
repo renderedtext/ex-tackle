@@ -73,101 +73,119 @@ defmodule Tackle.ConnectionTest do
       refute scrubbed =~ "pass"
       refute scrubbed =~ "user"
     end
+
+    test "fails closed on an unescaped '/' in the password instead of misparsing it into the host" do
+      # URI.parse/1 stops consuming userinfo at the first "/", so :host comes
+      # back "user" (part of the username) and the rest of the password
+      # spills into :path as "/mnOP@rabbit:5672/vh" - a rebuild from those
+      # fields alone would produce "amqp://user/mnOP@rabbit:5672/vh",
+      # leaking both the username and a password fragment. RabbitMQ
+      # passwords are frequently base64, whose alphabet includes "/", so
+      # this is a realistic credential, not a contrived one.
+      url = "amqp://user:aB3xYzKq7Lp/mnOP@rabbit:5672/vh"
+
+      assert %URI{host: "user", userinfo: nil} = URI.parse(url)
+
+      scrubbed = Tackle.Connection.scrub_url(url)
+
+      assert scrubbed == "[filtered]"
+      refute scrubbed =~ "aB3xYzKq7Lp"
+      refute scrubbed =~ "user"
+      refute scrubbed =~ "@"
+    end
+
+    test "fails closed on a raw space in the userinfo" do
+      url = "amqp://us er:pa/ss@host:not_a_port/vhost"
+
+      scrubbed = Tackle.Connection.scrub_url(url)
+
+      assert scrubbed == "[filtered]"
+      refute scrubbed =~ "us er"
+      refute scrubbed =~ "pa/ss"
+    end
+
+    test "still redacts (without misparsing) a password containing an embedded '@'" do
+      url = "amqp://user:p@ss@host:not_a_port/vhost"
+
+      scrubbed = Tackle.Connection.scrub_url(url)
+
+      refute scrubbed =~ "p@ss"
+      refute scrubbed =~ "user"
+    end
+
+    test "still redacts (without misparsing) a password containing a double-quote" do
+      url = "amqp://user:pa\"ss@host:not_a_port/vhost"
+
+      scrubbed = Tackle.Connection.scrub_url(url)
+
+      refute scrubbed =~ "pa\"ss"
+      refute scrubbed =~ "user"
+    end
   end
 
   describe "connection-open failure logging" do
-    # A malformed url (illegal port section) makes :amqp_uri.parse echo the
-    # raw url - credentials included - back inside the {:error, reason} term.
-    # See :amqp_uri.parse/2 / uri_parser.erl for the shape of the crash it
-    # embeds.
-    @malformed_credentialed_url "amqp://user:pa/ss@host/vhost"
-
-    # Every open attempt also logs a separate "Connecting to '...'" debug
-    # line (open_with_name/2) built from scrub_url/1 on the *raw input url*,
-    # not from scrub_term/1 on the *error term* - a different helper on a
-    # different value entirely. These tests are about scrub_term, so they
-    # assert against the specific "Opening.../Failed..." line it produces
-    # (via log_line/2), rather than the whole captured log, to stay isolated
-    # from that other code path.
-    test "the :default path (open_/2) scrubs credentials from the error it logs" do
+    # These are the two confirmed leak repros: a RabbitMQ password
+    # containing an unescaped "/" (realistic - base64 secrets include "/")
+    # makes :amqp_uri.parse/2 fail with a reason that embeds the BARE
+    # password fragment with no "amqp://" prefix at all (inside an erlang
+    # stacktrace argument, e.g. `{:erlang, :list_to_integer, ['<fragment>'],
+    # ...}`), so a scheme-anchored scrub over the inspected error term can
+    # never reach it. The fix is to never inspect/interpolate the raw error
+    # term in the first place - these tests assert the FRAGMENT is absent
+    # from the whole captured log, not just that the full password string is
+    # gone (checking only the full literal is how the previous, rejected
+    # attempt passed its tests while still leaking a substring of it).
+    test "the :default path (open_/2) never leaks the password fragment from a malformed uri" do
       log =
         capture_log(fn ->
-          assert {:error, _reason} = Tackle.Connection.open(:default, @malformed_credentialed_url)
+          assert {:error, _reason} =
+                   Tackle.Connection.open(:default, "amqp://user:aB3xYzKq7Lp/mnOP@rabbit:5672/vh")
         end)
 
-      line = log_line(log, "Opening new connection")
-      refute line =~ "pa/ss"
-      assert line =~ "amqp://host/vhost"
+      refute log =~ "aB3xYzKq7Lp"
+
+      line = log_line(log, "Failed to open new connection")
+      assert line =~ "reason: :unable_to_parse_uri"
+      assert line =~ "url: [filtered]"
     end
 
-    test "the open_and_persist/2 error path scrubs credentials and does not raise" do
+    test "the open_and_persist/2 path never leaks the password fragment from a malformed uri" do
       name = :"leak_regression_#{System.unique_integer([:positive])}"
 
       log =
         capture_log(fn ->
-          assert {:error, _reason} = Tackle.Connection.open(name, @malformed_credentialed_url)
+          assert {:error, _reason} =
+                   Tackle.Connection.open(name, "amqp://u:WHOLESECRET/@host/vhost")
         end)
+
+      refute log =~ "WHOLESECRET"
 
       line = log_line(log, "Failed to open new connection")
-      refute line =~ "pa/ss"
-      assert line =~ "amqp://host/vhost"
+      assert line =~ "reason: :unable_to_parse_uri"
+      assert line =~ "url: [filtered]"
     end
 
-    # A naive scrub that stops at the first "special" character in the
-    # userinfo fails open on exactly these two shapes: a raw space, and a
-    # stray "@" inside the credentials. Both are realistic for a malformed
-    # (hence unencoded) url, and both previously either leaked the whole url
-    # (space) or leaked a fragment of the password (embedded "@").
-    test "the :default path scrubs a credentialed url with a space in the userinfo" do
-      url = "amqp://us er:pa/ss@host:not_a_port/vhost"
-
-      log =
-        capture_log(fn ->
-          assert {:error, _reason} = Tackle.Connection.open(:default, url)
-        end)
-
-      line = log_line(log, "Opening new connection")
-      refute line =~ "us er"
-      refute line =~ "pa/ss"
-      assert line =~ "amqp://host:not_a_port/vhost"
-    end
-
-    test "the open_and_persist/2 path scrubs a credentialed url with an embedded '@' in the password" do
-      url = "amqp://user:p@ss@host:not_a_port/vhost"
+    test "reopen_on_validation_failure/3 logs a sanitized reason, not the raw validation term" do
       name = :"leak_regression_#{System.unique_integer([:positive])}"
 
       log =
         capture_log(fn ->
-          assert {:error, _reason} = Tackle.Connection.open(name, url)
+          assert {:ok, connection} =
+                   Tackle.Connection.reopen_on_validation_failure(
+                     {:error, :no_process},
+                     name,
+                     "amqp://rabbitmq:5672"
+                   )
+
+          AMQP.Connection.close(connection)
         end)
 
-      line = log_line(log, "Failed to open new connection")
-      refute line =~ "p@ss"
-      refute line =~ "user:p"
-      assert line =~ "amqp://host:not_a_port/vhost"
+      line = log_line(log, "Connection validation failed")
+      assert line =~ "reason: :no_process"
+      assert line =~ "amqp://rabbitmq:5672"
     end
 
-    # The raw url gets echoed back as a *charlist* (single-quote delimited in
-    # inspect/1's output), so a literal double-quote in the credentials is
-    # not a real terminator - only an unescaped single-quote is. A scrub that
-    # treats "any quote character" as a hard stop, rather than the actual
-    # enclosing delimiter, fails open here exactly like it did on the space
-    # and embedded-"@" cases above.
-    test "the :default path scrubs a credentialed url with a double-quote in the password" do
-      url = "amqp://user:pa\"ss@host:not_a_port/vhost"
-
-      log =
-        capture_log(fn ->
-          assert {:error, _reason} = Tackle.Connection.open(:default, url)
-        end)
-
-      line = log_line(log, "Opening new connection")
-      refute line =~ "pa\"ss"
-      refute line =~ "user:pa"
-      assert line =~ "amqp://host:not_a_port/vhost"
-    end
-
-    test "a non-url-bearing connection error is logged as-is and does not raise" do
+    test "a non-url-bearing connection error logs the scrubbed url and sanitized reason, without raising" do
       name = :"leak_regression_#{System.unique_integer([:positive])}"
 
       log =
@@ -177,8 +195,11 @@ defmodule Tackle.ConnectionTest do
         end)
 
       assert log =~ "Failed to open new connection"
-      assert log =~ ":econnrefused"
+      assert log =~ "reason: :econnrefused"
+      assert log =~ "amqp://127.0.0.1:1/vhost"
       refute log =~ "user:pass@"
+      refute log =~ "user"
+      refute log =~ "pass"
     end
 
     test "a successful connection open still logs a clean, readable struct" do
