@@ -46,26 +46,74 @@ defmodule Tackle.Connection do
   Returns the given AMQP url with its userinfo component removed, for use in
   log and status output.
 
-  Uses a whitelist rather than blanking individual fields. A well-formed
-  `amqp`/`amqps` url (non-nil host) is rebuilt from only its scheme/host/port/path,
-  keeping host, port and vhost while dropping userinfo. Anything else - a nil
-  host, an unexpected scheme, a schemeless string, or non-binary input - is
-  replaced wholesale with a placeholder, since userinfo could otherwise survive
-  in another parsed field.
+  Fails closed: this only ever returns a rebuilt `scheme://host:port/path`
+  when the parse is unambiguous and no userinfo can possibly have survived
+  into another field. A well-formed url has any credentials captured
+  entirely into `URI.parse/1`'s `:userinfo` field, which is dropped when
+  rebuilding. But `URI.parse/1` splits userinfo from host on the *last*
+  `@`, using a fairly permissive definition of "host" - an unescaped `/` in
+  the password (common with base64 secrets) makes it stop consuming at that
+  `/` instead, so `:userinfo` comes back `nil` while credential fragments
+  spill into `:host`/`:path` instead (e.g. `"amqp://user:pa/ss@host"` parses
+  to `host: "user"`, `path: "/ss@host"` - a naive rebuild from those fields
+  would leak "user" and "ss" right back out). So: whenever the raw url
+  contains an `@` at all, a `nil` userinfo means the parse is ambiguous, not
+  credential-free, and this returns the placeholder instead of guessing.
+  Anything else non-canonical - a nil host, an unexpected scheme, a
+  schemeless string, non-binary input, or (belt and suspenders) an `@`
+  surviving into the rebuilt string - is also replaced wholesale. Losing
+  host/vhost on a malformed url is an acceptable cost; leaking is not.
   """
   def scrub_url(url) when is_binary(url) do
-    case URI.parse(url) do
-      %URI{host: host, scheme: scheme} = uri
-      when is_binary(host) and scheme in ["amqp", "amqps"] ->
+    uri = URI.parse(url)
+
+    with true <- is_binary(uri.host),
+         true <- uri.scheme in ["amqp", "amqps"],
+         true <- credentials_fully_captured?(url, uri.userinfo) do
+      rebuilt =
         %URI{scheme: uri.scheme, host: uri.host, port: uri.port, path: uri.path}
         |> URI.to_string()
 
-      _ ->
-        "[filtered]"
+      if String.contains?(rebuilt, "@"), do: "[filtered]", else: rebuilt
+    else
+      _ -> "[filtered]"
     end
   end
 
   def scrub_url(_url), do: "[filtered]"
+
+  defp credentials_fully_captured?(url, userinfo) do
+    if String.contains?(url, "@") do
+      is_binary(userinfo)
+    else
+      is_nil(userinfo)
+    end
+  end
+
+  # Reduces a connection-open (or validation) failure to a coarse, safe
+  # classification for logging - NEVER the raw term.
+  #
+  # A `{:error, reason}` from a failed connection-open can embed the raw
+  # AMQP url - including credentials - deep inside `reason` in more than one
+  # place: `:amqp_uri.parse/2` echoes the malformed url verbatim into a
+  # `:malformed_uri` tuple, and separately scatters a BARE password fragment
+  # (no `amqp://` prefix at all) into an erlang stacktrace argument list via
+  # `:erlang.list_to_integer/1`. There is no fixed set of "safe" positions to
+  # pluck out of that shape - and no regex over its `inspect/1` form can
+  # reliably find every one either, which is exactly how the previous
+  # attempt at this still leaked - so this never descends into tuple
+  # contents beyond the leading tag: it unwraps one `{:error, _}` layer,
+  # then repeatedly takes `elem(0)` of whatever tuple remains until it hits
+  # an atom (or gives up). No binary, charlist, list, or nested tuple ever
+  # reaches the log.
+  defp sanitize_reason({:error, reason}), do: sanitize_reason(reason)
+  defp sanitize_reason(reason) when is_atom(reason), do: reason
+
+  defp sanitize_reason(reason) when is_tuple(reason) and tuple_size(reason) > 0 do
+    reason |> elem(0) |> sanitize_reason()
+  end
+
+  defp sanitize_reason(_reason), do: :connection_error
 
   @doc """
   Get a list of opened connections
@@ -75,9 +123,18 @@ defmodule Tackle.Connection do
   end
 
   defp open_(name = :default, url) do
-    connection = open_with_name(url, Atom.to_string(name))
-    Logger.info("Opening new connection #{inspect(connection)} for id: #{name}")
-    connection
+    case open_with_name(url, Atom.to_string(name)) do
+      response = {:ok, connection} ->
+        Logger.info("Opening new connection #{inspect(connection)} for id: #{name}")
+        response
+
+      error ->
+        Logger.error(
+          "Failed to open new connection for id: #{name}, url: #{scrub_url(url)}, reason: #{inspect(sanitize_reason(error))}"
+        )
+
+        error
+    end
   end
 
   defp open_(name, url) do
@@ -103,7 +160,10 @@ defmodule Tackle.Connection do
         response
 
       error ->
-        Logger.error("Failed to open new connection for id: #{name}: #{error}")
+        Logger.error(
+          "Failed to open new connection for id: #{name}, url: #{scrub_url(url)}, reason: #{inspect(sanitize_reason(error))}"
+        )
+
         error
     end
   end
@@ -113,7 +173,10 @@ defmodule Tackle.Connection do
   end
 
   def reopen_on_validation_failure(state = {:error, _}, name, url) do
-    Logger.warning("Connection validation failed #{inspect(state)} for id: #{name}")
+    Logger.warning(
+      "Connection validation failed for id: #{name}, url: #{scrub_url(url)}, reason: #{inspect(sanitize_reason(state))}"
+    )
+
     Agent.update(__MODULE__, fn state -> Map.delete(state, name) end)
     open(name, url)
   end
