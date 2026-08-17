@@ -121,6 +121,50 @@ defmodule Tackle.ConnectionTest do
       refute scrubbed =~ "pa\"ss"
       refute scrubbed =~ "user"
     end
+
+    test "redacts a well-formed url with a scheme other than amqp/amqps" do
+      scrubbed = Tackle.Connection.scrub_url("https://user:pass@host:5672/vhost")
+
+      assert scrubbed == "[filtered]"
+      refute scrubbed =~ "pass"
+      refute scrubbed =~ "user"
+    end
+
+    test "redacts non-binary input instead of raising" do
+      assert Tackle.Connection.scrub_url(nil) == "[filtered]"
+      assert Tackle.Connection.scrub_url(123) == "[filtered]"
+      assert Tackle.Connection.scrub_url(%{}) == "[filtered]"
+    end
+  end
+
+  describe "connecting debug log (open/1, open_with_name/2)" do
+    test "open/1 logs only the scrubbed url at debug level, never the raw credentials" do
+      log =
+        capture_log([level: :debug], fn ->
+          Tackle.Connection.open("amqp://leaky_user:leaky_pass@127.0.0.1:1/vh")
+        end)
+
+      line = log_line(log, "Connecting to")
+      assert line =~ "amqp://127.0.0.1:1/vh"
+      refute log =~ "leaky_user"
+      refute log =~ "leaky_pass"
+    end
+
+    test "open_with_name/2 logs only the scrubbed url at debug level, never the raw credentials" do
+      log =
+        capture_log([level: :debug], fn ->
+          Tackle.Connection.open_with_name(
+            "amqp://leaky_user:leaky_pass@127.0.0.1:1/vh",
+            "conn-name"
+          )
+        end)
+
+      line = log_line(log, "Connecting to")
+      assert line =~ "amqp://127.0.0.1:1/vh"
+      assert line =~ "conn-name"
+      refute log =~ "leaky_user"
+      refute log =~ "leaky_pass"
+    end
   end
 
   describe "connection-open failure logging" do
